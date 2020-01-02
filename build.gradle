@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+    maven { url "https://jitpack.io" } 
+}
+
+dependencies {
+	implementation 'com.github.realtimetech-solution:kson:0.5.0'
+	implementation 'com.github.realtimetech-solution:reflection:0.2.4'
+}

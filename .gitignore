@@ -5,3 +5,6 @@
 build
 /performance_db/
 /performance_mixed_db/
+/exception1_db/
+/normal_db/
+/bin/

@@ -16,12 +16,14 @@ public class TestForPerformanceSelect {
 	
 
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, InterruptedException, FermesItemException {
+		File databaseDirectory = new File("performance_db/");
+		
 		Database database;
-		database = FermesDB.get(new File("performance_db/"), 8192, 256, Long.MAX_VALUE);
+		database = FermesDB.get(databaseDirectory, 8192, 256, Long.MAX_VALUE);
 
 		List<Thread> threads = new LinkedList<Thread>();
 
-		int volume = 10000000;
+		int volume = 1000000;
 		int threadCount = 4;
 		int managerCount = 4;
 

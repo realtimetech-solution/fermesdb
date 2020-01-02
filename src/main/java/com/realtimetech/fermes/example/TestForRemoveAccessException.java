@@ -18,6 +18,7 @@ public class TestForRemoveAccessException {
 		Random random = new Random();
 		int seed = random.nextInt(400) + 10;
 		{
+			FermesDB.deleteDatabase(new File("exception1_db/"));
 			Database database;
 			database = FermesDB.get(new File("exception1_db/"), 128, 32, Long.MAX_VALUE);
 

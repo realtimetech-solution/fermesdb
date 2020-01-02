@@ -14,6 +14,21 @@ public class FermesDB {
 		return new Database(databaseDirectory, pageSize, blockSize, maxMemory);
 	}
 
+	public static boolean deleteDatabase(File databaseDirectory)
+			throws FermesDatabaseException {
+		if(databaseDirectory.exists() && databaseDirectory.isDirectory()) {
+			File[] listFiles = databaseDirectory.listFiles();
+			for(File file : listFiles) {
+				file.delete();
+			}
+			databaseDirectory.delete();
+			
+			return true;
+		}
+		
+		return false;
+	}
+
 	public static boolean existDatabase(File databaseDirectory) {
 		if (databaseDirectory.isDirectory() && databaseDirectory.exists()) {
 			File configFile = new File(databaseDirectory, "database.config");

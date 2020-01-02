@@ -97,7 +97,7 @@ public class Link<R extends Item> extends StoreSerializable {
 	protected long gid;
 	protected long parentLink;
 
-	protected LinkedList<Long> childLinks;
+	protected ArrayList<Long> childLinks;
 
 	protected ArrayList<Integer> blockIds;
 
@@ -109,7 +109,7 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.item = null;
 		this.itemLength = -1;
 
-		this.childLinks = new LinkedList<Long>();
+		this.childLinks = new ArrayList<Long>();
 		this.blockIds = new ArrayList<Integer>();
 	}
 
@@ -147,7 +147,6 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.accessed = true;
 
 		if (this.item == null) {
-			System.out.println(this.getDatabase().getLinkByGid(this.gid));
 			synchronized (this) {
 				try {
 					this.getDatabase().loadLink(this);

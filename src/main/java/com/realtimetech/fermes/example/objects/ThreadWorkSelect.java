@@ -22,17 +22,18 @@ public class ThreadWorkSelect implements Runnable {
 		for (int i = 0; i < volume; i++) {
 			try {
 				int itemCount = dummyManager.get().getItemCount();
-				
+
 				try {
-					if(itemCount == 0) {
+					if (itemCount == 0) {
 						i--;
-					}else {
+						System.out.println("데이터가 없어서 롤백..!");
+					} else {
 						DummyManager dummyManager2 = dummyManager.get();
 						try {
 							int nextInt = random.nextInt(itemCount);
 							Link<Dummy> itemByGid = dummyManager2.getItem(nextInt);
 							Dummy dummy = itemByGid.get();
-							dummy.getDummys();						
+							dummy.getDummys();
 						} catch (NullPointerException e) {
 							e.printStackTrace();
 
@@ -41,7 +42,7 @@ public class ThreadWorkSelect implements Runnable {
 				} catch (PageIOException e) {
 					e.printStackTrace();
 				}
-			}catch (FermesItemException e) {
+			} catch (FermesItemException e) {
 				e.printStackTrace();
 			}
 		}

@@ -175,6 +175,10 @@ public class Database {
 		System.gc();
 
 		this.rootItem = (Link<RootItem>) this.getLinkByGid(0);
+		
+		if(this.rootItem == null) {
+			throw new FermesDatabaseException("Can't create database, failure load root link(0).");
+		}
 	}
 
 	public void save() throws FermesDatabaseException {

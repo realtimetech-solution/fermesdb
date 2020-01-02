@@ -88,13 +88,13 @@ public class Link<R extends Item> extends StoreSerializable {
 	protected Link<? extends Item> nextObject;
 	protected Link<? extends Item> prevObject;
 	protected boolean accessed;
-
+	protected boolean removed = false;
+	
 	private Page page;
 
 	protected R item;
 
 	protected long gid;
-
 	protected long parentLink;
 
 	protected LinkedList<Long> childLinks;
@@ -131,7 +131,7 @@ public class Link<R extends Item> extends StoreSerializable {
 		return page;
 	}
 
-	protected long getGid() {
+	public long getGid() {
 		return gid;
 	}
 
@@ -139,10 +139,15 @@ public class Link<R extends Item> extends StoreSerializable {
 		return item != null;
 	}
 
-	public R get() {
+	public R get() throws FermesItemException {
+		if(this.removed) {
+			throw new FermesItemException("Can't access this link, already removed!");
+		}
+		
 		this.accessed = true;
 
 		if (this.item == null) {
+			System.out.println(this.getDatabase().getLinkByGid(this.gid));
 			synchronized (this) {
 				try {
 					this.getDatabase().loadLink(this);

@@ -1,6 +1,7 @@
 package com.realtimetech.fermes.example;
 
 import java.io.File;
+import java.util.Random;
 
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
@@ -11,18 +12,25 @@ import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.exception.FermesDatabaseException;
 
-public class TestForMemory {
+public class TestForRemoveAccessException {
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
-		Database database;
-		database = FermesDB.get(new File("memory_db/"), 1024, 128, 1024);
 
-		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
+		Random random = new Random();
+		int seed = random.nextInt(400) + 10;
+		{
+			Database database;
+			database = FermesDB.get(new File("exception1_db/"), 128, 32, Long.MAX_VALUE);
 
-		dummyManager.get().addItem(new Dummy(100));
-		System.out.println(database.getCurrentMemory());
-		dummyManager.get().addItem(new Dummy(100));
-		System.out.println(database.getCurrentMemory());
+			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
-		database.save();
+			Link<Dummy> dummy = dummyManager.get().addItem(new Dummy(seed));
+			
+			dummyManager.removeChildLink(dummy);
+			
+			dummy.get();
+			
+			System.out.println("Saved! Memory " + database.getCurrentMemory());
+		}
+
 	}
 }

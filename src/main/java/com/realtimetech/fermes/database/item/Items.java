@@ -1,8 +1,6 @@
 package com.realtimetech.fermes.database.item;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collection;
 
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.page.exception.PageIOException;
@@ -26,12 +24,16 @@ public abstract class Items<T extends Item> implements Item {
 		return this.currentLink.removeChildLink(link);
 	}
 
-	public Link<T> getItem(int index) throws PageIOException {
-		return (Link<T>) this.currentLink.getDatabase().getLinkByGid(this.currentLink.getChildLinks().get(index));
+	public Link<T> getItemByGid(long gid) throws PageIOException {
+		return (Link<T>) this.currentLink.getDatabase().getLinkByGid(gid);
 	}
 
-	public List<Long> getItems() {
-		return new ArrayList<Long>(this.currentLink.getChildLinks());
+	public Link<T> getItem(int index) throws PageIOException {
+		return (Link<T>) this.currentLink.getChildLinkItem(index);
+	}
+
+	public Collection<Long> getItemGids() {
+		return this.currentLink.getChildLinks();
 	}
 
 	public int getItemCount() {
@@ -40,13 +42,15 @@ public abstract class Items<T extends Item> implements Item {
 
 	@Deprecated
 	public Link<T>[] getItemArray() {
-		LinkedList<Long> childLinks = this.currentLink.getChildLinks();
+		Collection<Long> childLinks = this.currentLink.getChildLinks();
 		
 		synchronized (childLinks) {
 			Link<T>[] items = new Link[childLinks.size()];
 
-			for (int index = 0; index < childLinks.size(); index++) {
-				items[index] = (Link<T>) this.currentLink.getDatabase().getLinkByGid(childLinks.get(index));
+			int index = 0;
+			
+			for (Long gid : childLinks) {
+				items[index] = (Link<T>) this.currentLink.getDatabase().getLinkByGid(gid);
 			}
 
 			return items;

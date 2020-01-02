@@ -63,8 +63,7 @@ public class Database {
 		}
 	}
 
-	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory)
-			throws FermesDatabaseException {
+	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws FermesDatabaseException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -159,10 +158,10 @@ public class Database {
 			try {
 				Page page = this.createPageWithoutEmptyPointer();
 				this.pages.add(page);
-				
+
 				MemoryFileWriter pageBuffer = new MemoryFileWriter(page.getPageFile());
 				pageBuffer.load();
-				
+
 				pageSerializer.read(page, pageBuffer);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -190,14 +189,14 @@ public class Database {
 
 		for (Page page : this.pages) {
 			page.enableBlocksDirectly();
-			
+
 			for (Link<? extends Item> link : page.getLinks()) {
 				if (link != null) {
 					try {
 						unloadLink(link);
 					} catch (BlockIOException | FermesItemException e) {
 						e.printStackTrace();
-						
+
 						throw new FermesDatabaseException("Can't save database, BlockIOException in save links.");
 					}
 				}
@@ -210,7 +209,7 @@ public class Database {
 			} catch (IOException e) {
 				throw new FermesDatabaseException("Can't save database, IOException in save page files.");
 			}
-			
+
 			try {
 				page.disableBlocksDirectly();
 			} catch (IOException e) {
@@ -249,10 +248,8 @@ public class Database {
 	}
 
 	public Page getPageByGid(long gid) {
-		synchronized (this.pages) {
-			int index = (int) (gid / this.pageSize);
-			return this.pages.size() > index ? this.pages.get(index) : null;
-		}
+		int index = (int) (gid / this.pageSize);
+		return this.pages.size() > index ? this.pages.get(index) : null;
 	}
 
 	private byte[] serialiizeItem(Item item) throws FermesItemException {
@@ -271,9 +268,7 @@ public class Database {
 		try {
 			JsonObject jsonObject = (JsonObject) ksonPool.get().fromString(new String(bytes, charset));
 
-			Object object = ksonPool.get().toObject(
-					Database.class.getClassLoader().loadClass((String) jsonObject.get("class")),
-					jsonObject.get("item"));
+			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), jsonObject.get("item"));
 
 			return (Item) object;
 		} catch (IOException | ClassNotFoundException | DeserializeException e) {
@@ -389,16 +384,16 @@ public class Database {
 		Link<R> link = new Link<R>(this, page, parentLink == null ? -1 : parentLink.gid, gid);
 		link.item = item;
 
+		item.onCreate((Link<R>) link);
+		item.onLoad(link);
+
+		page.setLinkByIndex(nextIndex, link);
+
 		if (parentLink != null) {
 			synchronized (parentLink.childLinks) {
 				parentLink.childLinks.add(gid);
 			}
 		}
-
-		item.onCreate((Link<R>) link);
-		item.onLoad(link);
-
-		page.setLinkByIndex(nextIndex, link);
 
 		try {
 			this.updateLinkLength(link);
@@ -423,14 +418,18 @@ public class Database {
 		Link<? extends Item> parentLink = this.getLinkByGid(link.parentLink);
 
 		if (parentLink != null) {
-			parentLink.childLinks.remove(link.gid);
+			synchronized (parentLink.childLinks) {
+				parentLink.childLinks.remove(link.gid);
+			}
 		}
 
-		for (long childLinkGid : link.childLinks) {
-			Link<? extends Item> childLink = this.getLinkByGid(childLinkGid);
+		synchronized (link.childLinks) {
+			for (long childLinkGid : link.childLinks) {
+				Link<? extends Item> childLink = this.getLinkByGid(childLinkGid);
 
-			if (childLink != null) {
-				this.removeLink(childLink);
+				if (childLink != null) {
+					this.removeLink(childLink);
+				}
 			}
 		}
 
@@ -442,7 +441,7 @@ public class Database {
 		page.removeLinkByIndex(link.blockIds, index);
 
 		this.addEmptyPagePointer(new EmptyPagePointer(page, index));
-		
+
 		return true;
 	}
 

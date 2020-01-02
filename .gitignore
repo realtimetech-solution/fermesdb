@@ -3,3 +3,5 @@
 
 # Ignore Gradle build output directory
 build
+/performance_db/
+/performance_mixed_db/

@@ -19,12 +19,12 @@ public class TestForPerformanceSelect {
 		File databaseDirectory = new File("performance_db/");
 		
 		Database database;
-		database = FermesDB.get(databaseDirectory, 8192, 256, Long.MAX_VALUE);
+		database = FermesDB.get(databaseDirectory, 8192, 512, Long.MAX_VALUE);
 
 		List<Thread> threads = new LinkedList<Thread>();
 
 		int volume = 1000000;
-		int threadCount = 4;
+		int threadCount = 2;
 		int managerCount = 4;
 
 		for (int i = 0; i < threadCount; i++) {

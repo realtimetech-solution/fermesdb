@@ -14,7 +14,7 @@ import com.realtimetech.fermes.exception.FermesDatabaseException;
 public class TestForMemory {
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
 		Database database;
-		database = FermesDB.get(new File("memory_db/"), 1024, 128, 1024);
+		database = FermesDB.get(new File("memory_db/"), 1024, 512, 1024);
 
 		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 

@@ -17,7 +17,7 @@ import com.realtimetech.fermes.exception.FermesDatabaseException;
 public class TestForRemoval {
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
 		Database database;
-		database = FermesDB.get(new File("removal_db/"), 128, 32, 1024);
+		database = FermesDB.get(new File("removal_db/"), 1024, 512, 1024);
 
 		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 

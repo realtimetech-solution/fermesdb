@@ -22,9 +22,10 @@ public class TestForNormal {
 
 		Random random = new Random();
 		int seed = random.nextInt(400) + 10;
+		File databaseDirectory = new File("normal_db/");
 		{
 			Database database;
-			database = FermesDB.get(new File("normal_db/"), 128, 32, Long.MAX_VALUE);
+			database = FermesDB.get(databaseDirectory, 128, 512, Long.MAX_VALUE);
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
@@ -44,7 +45,7 @@ public class TestForNormal {
 		{
 
 			Database database;
-			database = FermesDB.get(new File("normal_db/"), 128, 32, 1024);
+			database = FermesDB.loadDatabase(databaseDirectory);
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
@@ -68,7 +69,7 @@ public class TestForNormal {
 		{
 
 			Database database;
-			database = FermesDB.get(new File("normal_db/"), 128, 32, 1024);
+			database = FermesDB.loadDatabase(databaseDirectory);
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 

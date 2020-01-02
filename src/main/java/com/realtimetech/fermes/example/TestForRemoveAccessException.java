@@ -20,7 +20,7 @@ public class TestForRemoveAccessException {
 		{
 			FermesDB.deleteDatabase(new File("exception1_db/"));
 			Database database;
-			database = FermesDB.get(new File("exception1_db/"), 128, 32, Long.MAX_VALUE);
+			database = FermesDB.get(new File("exception1_db/"), 1024, 512, Long.MAX_VALUE);
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 

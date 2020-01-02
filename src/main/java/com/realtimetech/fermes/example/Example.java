@@ -71,13 +71,13 @@ public class Example {
 		Database database;
 
 		// Create or
-//		database = FermesDB.createDatabase(new File("example_db/"), 1024, 128, Long.MAX_VALUE);
+//		database = FermesDB.createDatabase(new File("example_db/"), 1024, 512, Long.MAX_VALUE);
 
 		// Load or
 //		database = FermesDB.loadDatabase(new File("example_db/"));
 
 		// Get(If not exist create, or not just load)
-		database = FermesDB.get(new File("example_db/"), 1024, 128, Long.MAX_VALUE);
+		database = FermesDB.get(new File("example_db/"), 1024, 512, Long.MAX_VALUE);
 
 		// Create root managers (not only one)
 		Link<UserManager> userManager = database.getLink("user_manager", () -> new UserManager());

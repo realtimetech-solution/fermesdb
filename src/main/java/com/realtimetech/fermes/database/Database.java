@@ -215,6 +215,7 @@ public class Database {
 				pageSerializer.write(page, pageBuffer);
 				pageBuffer.save();
 			} catch (IOException e) {
+				e.printStackTrace();
 				throw new FermesDatabaseException("Can't save database, IOException in save page files.");
 			}
 
@@ -355,6 +356,7 @@ public class Database {
 				byte[] bytes = serialiizeItem(link.item);
 
 				link.itemLength = bytes.length;
+				link.blockIds = link.getPage().fitBlockIds(link.blockIds, link.itemLength);
 				link.getPage().writeBlocks(link.blockIds, bytes);
 			}
 			link.item = null;
@@ -400,6 +402,8 @@ public class Database {
 		page.setLinkByIndex(nextIndex, link);
 
 		if (parentLink != null) {
+			parentLink.createChildLinksIfNotExist();
+			
 			synchronized (parentLink.childLinks) {
 				parentLink.childLinks.add(gid);
 			}
@@ -430,18 +434,21 @@ public class Database {
 
 			Link<? extends Item> parentLink = this.getLinkByGid(link.parentLink);
 
-			if (parentLink != null) {
+			if (parentLink != null && parentLink.childLinks != null) {
+				
 				synchronized (parentLink.childLinks) {
 					parentLink.childLinks.remove(link.gid);
 				}
 			}
 
-			synchronized (link.childLinks) {
-				for (long childLinkGid : link.childLinks) {
-					Link<? extends Item> childLink = this.getLinkByGid(childLinkGid);
+			if(link.childLinks != null) {
+				synchronized (link.childLinks) {
+					for (long childLinkGid : link.childLinks) {
+						Link<? extends Item> childLink = this.getLinkByGid(childLinkGid);
 
-					if (childLink != null) {
-						this.removeLink(childLink);
+						if (childLink != null) {
+							this.removeLink(childLink);
+						}
 					}
 				}
 			}

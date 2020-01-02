@@ -39,4 +39,10 @@ public abstract class FileWriter {
 	public abstract int readInteger() throws IOException;
 
 	public abstract long readLong() throws IOException;
+	
+	public void createFileIfNotExist() throws IOException {
+		if (!this.file.exists()) {
+			this.file.createNewFile();
+		}
+	}
 }

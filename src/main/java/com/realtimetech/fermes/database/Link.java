@@ -2,6 +2,7 @@ package com.realtimetech.fermes.database;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 
 import com.realtimetech.fermes.database.exception.FermesItemException;
@@ -26,7 +27,7 @@ public class Link<R extends Item> extends StoreSerializable {
 		@Override
 		public long getWriteLength(Link<? extends Item> value) {
 			long length = 0;
-			
+
 			length += 8;
 			length += 8;
 			length += 8;
@@ -35,9 +36,9 @@ public class Link<R extends Item> extends StoreSerializable {
 			length += 4;
 
 			length += value.childLinks.size() * 8;
-			
+
 			length += value.blockIds.size() * 4;
-			
+
 			return length;
 		}
 
@@ -47,7 +48,7 @@ public class Link<R extends Item> extends StoreSerializable {
 			pageBuffer.writeLong(value.parentLink);
 			pageBuffer.writeLong(value.childLinks.size());
 			pageBuffer.writeLong(value.blockIds.size());
-			
+
 			pageBuffer.writeInteger(value.itemLength);
 
 			for (Long linkGid : value.childLinks) {
@@ -65,13 +66,13 @@ public class Link<R extends Item> extends StoreSerializable {
 			long parentLink = pageBuffer.readLong();
 			long childLinkCount = pageBuffer.readLong();
 			long blockIdCount = pageBuffer.readLong();
-			
+
 			int itemLength = pageBuffer.readInteger();
 
 			value.page = page;
 			value.parentLink = parentLink;
 			value.gid = gid;
-			
+
 			for (int index = 0; index < childLinkCount; index++) {
 				value.childLinks.add(pageBuffer.readLong());
 			}
@@ -95,6 +96,7 @@ public class Link<R extends Item> extends StoreSerializable {
 	protected long gid;
 
 	protected long parentLink;
+
 	protected LinkedList<Long> childLinks;
 
 	protected ArrayList<Integer> blockIds;
@@ -110,7 +112,7 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.childLinks = new LinkedList<Long>();
 		this.blockIds = new ArrayList<Integer>();
 	}
-	
+
 	public Link(Database database, Page page, long parentGid, long gid) {
 		this(database);
 
@@ -119,8 +121,10 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.parentLink = parentGid;
 	}
 
-	public LinkedList<Long> getChildLinks() {
-		return childLinks;
+	public Collection<Long> getChildLinks() {
+		synchronized (this.childLinks) {
+			return childLinks;
+		}
 	}
 
 	protected Page getPage() {
@@ -139,15 +143,24 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.accessed = true;
 
 		if (this.item == null) {
-			try {
-				this.getDatabase().loadLink(this);
-			} catch (BlockIOException | FermesItemException e) {
-				e.printStackTrace();
+			synchronized (this) {
+				try {
+					this.getDatabase().loadLink(this);
+				} catch (BlockIOException | FermesItemException e) {
+					e.printStackTrace();
 
-				// TODO CRASHED DB...
+					// TODO CRASHED DB...
+				}
 			}
 		}
+
 		return item;
+	}
+
+	public Link<? extends Item> getChildLinkItem(int index) throws PageIOException {
+		synchronized (this.childLinks) {
+			return (Link<? extends Item>) this.getDatabase().getLinkByGid(this.childLinks.get(index));
+		}
 	}
 
 	public <V extends Item> Link<V> createChildLink(V item) throws PageIOException {

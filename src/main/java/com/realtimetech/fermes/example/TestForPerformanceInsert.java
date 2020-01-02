@@ -13,14 +13,12 @@ import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
 import com.realtimetech.fermes.exception.FermesDatabaseException;
 
 public class TestForPerformanceInsert {
-	
-
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, InterruptedException, FermesItemException {
 		File databaseDirectory = new File("performance_db/");
 		FermesDB.deleteDatabase(databaseDirectory);
 		
 		Database database;
-		database = FermesDB.get(databaseDirectory, 8192, 256, Long.MAX_VALUE);
+		database = FermesDB.get(databaseDirectory, 8192, 512, Long.MAX_VALUE);
 
 		List<Thread> threads = new LinkedList<Thread>();
 

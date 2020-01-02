@@ -11,7 +11,7 @@ public class MemoryFileWriter extends FileWriter {
 	private byte[][] buffers;
 
 	private long pointer;
-	
+
 	private long size;
 
 	public MemoryFileWriter(File file) {
@@ -168,6 +168,8 @@ public class MemoryFileWriter extends FileWriter {
 	}
 
 	public void save() throws IOException {
+		createFileIfNotExist();
+
 		FileOutputStream fileOutputStream = new FileOutputStream(getFile(), false);
 
 		for (byte[] bytes : this.buffers) {
@@ -178,6 +180,8 @@ public class MemoryFileWriter extends FileWriter {
 	}
 
 	public void load() throws IOException {
+		createFileIfNotExist();
+
 		FileInputStream fileInputStream = new FileInputStream(getFile());
 
 		for (byte[] bytes : this.buffers) {

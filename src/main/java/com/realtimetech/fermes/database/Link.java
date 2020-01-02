@@ -31,13 +31,13 @@ public class Link<R extends Item> extends StoreSerializable {
 			length += 8;
 			length += 8;
 			length += 8;
-			length += 8;
-
+			
+			length += 4;
 			length += 4;
 
-			length += value.childLinks.size() * 8;
+			length += value.childLinks == null ? 0 : value.childLinks.size() * 8;
 
-			length += value.blockIds.size() * 4;
+			length += value.blockIds.length * 4;
 
 			return length;
 		}
@@ -46,15 +46,22 @@ public class Link<R extends Item> extends StoreSerializable {
 		public void onWrite(Link<? extends Item> value, MemoryFileWriter pageBuffer) throws IOException {
 			pageBuffer.writeLong(value.gid);
 			pageBuffer.writeLong(value.parentLink);
-			pageBuffer.writeLong(value.childLinks.size());
-			pageBuffer.writeLong(value.blockIds.size());
-
+			
+			if(value.childLinks == null) {
+				pageBuffer.writeLong(0);
+			}else {
+				pageBuffer.writeLong(value.childLinks.size());
+			}
+			
+			pageBuffer.writeInteger(value.blockIds.length);
 			pageBuffer.writeInteger(value.itemLength);
 
-			for (Long linkGid : value.childLinks) {
-				pageBuffer.writeLong(linkGid);
+			if(value.childLinks != null) {
+				for (Long linkGid : value.childLinks) {
+					pageBuffer.writeLong(linkGid);
+				}
 			}
-
+			
 			for (Integer blockId : value.blockIds) {
 				pageBuffer.writeInteger(blockId);
 			}
@@ -65,8 +72,8 @@ public class Link<R extends Item> extends StoreSerializable {
 			long gid = pageBuffer.readLong();
 			long parentLink = pageBuffer.readLong();
 			long childLinkCount = pageBuffer.readLong();
-			long blockIdCount = pageBuffer.readLong();
-
+			
+			int blockIdLength = pageBuffer.readInteger();
 			int itemLength = pageBuffer.readInteger();
 
 			value.page = page;
@@ -74,11 +81,13 @@ public class Link<R extends Item> extends StoreSerializable {
 			value.gid = gid;
 
 			for (int index = 0; index < childLinkCount; index++) {
+				value.createChildLinksIfNotExist();
 				value.childLinks.add(pageBuffer.readLong());
 			}
 
-			for (int index = 0; index < blockIdCount; index++) {
-				value.blockIds.add(pageBuffer.readInteger());
+			value.blockIds = new int[(int) blockIdLength];
+			for (int index = 0; index < blockIdLength; index++) {
+				value.blockIds[index] = pageBuffer.readInteger();
 			}
 
 			value.itemLength = itemLength;
@@ -98,8 +107,8 @@ public class Link<R extends Item> extends StoreSerializable {
 	protected long parentLink;
 
 	protected ArrayList<Long> childLinks;
-
-	protected ArrayList<Integer> blockIds;
+	
+	protected int[] blockIds;
 
 	protected int itemLength;
 
@@ -109,8 +118,8 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.item = null;
 		this.itemLength = -1;
 
-		this.childLinks = new ArrayList<Long>();
-		this.blockIds = new ArrayList<Integer>();
+		this.childLinks = null;
+		this.blockIds = new int[0];
 	}
 
 	public Link(Database database, Page page, long parentGid, long gid) {
@@ -122,11 +131,25 @@ public class Link<R extends Item> extends StoreSerializable {
 	}
 
 	public Collection<Long> getChildLinks() {
+		this.createChildLinksIfNotExist();
+		
 		synchronized (this.childLinks) {
 			return childLinks;
 		}
 	}
-
+	
+	protected void createChildLinksIfNotExist() {
+		if(this.childLinks == null) {
+			synchronized (this) {
+				if(this.childLinks != null) {
+					return;	// DOUBLE CHECK
+				}
+				
+				this.childLinks = new ArrayList<Long>();
+			}
+		}
+	}
+	
 	protected Page getPage() {
 		return page;
 	}
@@ -162,6 +185,10 @@ public class Link<R extends Item> extends StoreSerializable {
 	}
 
 	public Link<? extends Item> getChildLinkItem(int index) throws PageIOException {
+		if(this.childLinks == null) {
+			return null;
+		}
+		
 		synchronized (this.childLinks) {
 			return (Link<? extends Item>) this.getDatabase().getLinkByGid(this.childLinks.get(index));
 		}

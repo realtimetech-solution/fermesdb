@@ -166,6 +166,8 @@ public class BlockMemoryFileWriter extends FileWriter {
 	}
 
 	public void save() throws IOException {
+		createFileIfNotExist();
+		
 		FileOutputStream fileOutputStream = new FileOutputStream(getFile(), false);
 
 		for (byte[] bytes : this.blocks) {
@@ -176,6 +178,8 @@ public class BlockMemoryFileWriter extends FileWriter {
 	}
 
 	public void load() throws IOException {
+		createFileIfNotExist();
+		
 		File file = getFile();
 		FileInputStream fileInputStream = new FileInputStream(file);
 

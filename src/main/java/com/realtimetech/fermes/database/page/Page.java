@@ -3,7 +3,6 @@ package com.realtimetech.fermes.database.page;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 import com.realtimetech.fermes.database.Database;
@@ -146,21 +145,8 @@ public class Page extends StoreSerializable {
 
 		this.blockSize = blockSize;
 
-		{
-			this.pageFile = new File(this.getDatabase().getDatabaseDirectory().getPath() + File.separator + this.id + ".page");
-
-			if (!this.pageFile.exists()) {
-				this.pageFile.createNewFile();
-			}
-		}
-
-		{
-			this.blockFile = new File(this.getDatabase().getDatabaseDirectory().getPath() + File.separator + this.id + ".block");
-
-			if (!this.blockFile.exists()) {
-				this.blockFile.createNewFile();
-			}
-		}
+		this.pageFile = new File(this.getDatabase().getDatabaseDirectory().getPath() + File.separator + this.id + ".page");
+		this.blockFile = new File(this.getDatabase().getDatabaseDirectory().getPath() + File.separator + this.id + ".block");
 
 		this.blockFileWriter = new RandomAccessFileWriter(blockFile);
 		this.blockFileWriterRollback = null;
@@ -182,13 +168,13 @@ public class Page extends StoreSerializable {
 		this.links[index] = link;
 	}
 
-	public synchronized void removeLinkByIndex(List<Integer> blockIds, int index) {
+	public synchronized void removeLinkByIndex(int[] blockIds, int index) {
 		if (this.links[index] != null) {
-			for (int blockId : blockIds) {
-				this.emptyBlockIds.offer(blockId);
-			}
+			for (int i = 0; i < blockIds.length; i++) {
+				this.emptyBlockIds.offer(blockIds[i]);
 
-			blockIds.clear();
+				blockIds[i] = -1;
+			}
 
 			this.links[index] = null;
 		}
@@ -198,27 +184,45 @@ public class Page extends StoreSerializable {
 		return pageFile;
 	}
 
-	public synchronized void writeBlocks(List<Integer> blockIds, byte[] bytes) throws BlockIOException {
-		int needIndexies = (int) Math.ceil((float) bytes.length / (float) blockSize);
+	public synchronized int[] fitBlockIds(int[] blockIds, int length) {
+		int needIndexies = (int) Math.ceil((float) length / (float) blockSize);
 
-		int manage = needIndexies - blockIds.size();
+		int manage = needIndexies - blockIds.length;
 
-		if (manage > 0) {
-			for (int index = 0; index < manage; index++) {
-				if (!this.emptyBlockIds.isEmpty()) {
-					blockIds.add(this.emptyBlockIds.poll());
-				} else {
-					blockIds.add(this.maxBlockId++);
+		if (manage == 0) {
+			return blockIds;
+		} else {
+			int[] newIds = new int[needIndexies];
+
+			if (manage > 0) {
+				for (int index = 0; index < newIds.length; index++) {
+					if (index >= blockIds.length) {
+						if (!this.emptyBlockIds.isEmpty()) {
+							newIds[index] = this.emptyBlockIds.poll();
+						} else {
+							newIds[index] = this.maxBlockId++;
+						}
+					} else {
+						newIds[index] = blockIds[index];
+					}
+				}
+			} else if (manage < 0) {
+				manage *= -1;
+
+				for (int index = 0; index < blockIds.length; index++) {
+					if (index >= newIds.length) {
+						this.emptyBlockIds.offer(blockIds[index]);
+					} else {
+						newIds[index] = blockIds[index];
+					}
 				}
 			}
-		} else if (manage < 0) {
-			for (int index = 0; index > manage; index--) {
-				Integer removeIndex = blockIds.remove(0);
 
-				this.emptyBlockIds.offer(removeIndex);
-			}
+			return newIds;
 		}
+	}
 
+	public synchronized void writeBlocks(int[] blockIds, byte[] bytes) throws BlockIOException {
 		int index = 0;
 		int writeSize = bytes.length;
 		for (Integer blockId : blockIds) {
@@ -230,7 +234,7 @@ public class Page extends StoreSerializable {
 				writeSize -= this.blockSize;
 			} catch (IOException e) {
 				e.printStackTrace();
-				
+
 				throw new BlockIOException("Can't write blocks.");
 			}
 		}
@@ -251,7 +255,7 @@ public class Page extends StoreSerializable {
 
 	public synchronized void disableBlocksDirectly() throws IOException {
 		if (this.blockFileWriterRollback != null) {
-			if(this.blockFileWriter instanceof BlockMemoryFileWriter) {
+			if (this.blockFileWriter instanceof BlockMemoryFileWriter) {
 				BlockMemoryFileWriter blockMemoryFileWriter = (BlockMemoryFileWriter) this.blockFileWriter;
 
 				blockMemoryFileWriter.save();
@@ -262,7 +266,7 @@ public class Page extends StoreSerializable {
 		}
 	}
 
-	public synchronized byte[] readBlocks(List<Integer> blockIds, int itemLength) throws BlockIOException {
+	public synchronized byte[] readBlocks(int[] blockIds, int itemLength) throws BlockIOException {
 		byte[] bytes = new byte[itemLength];
 
 		int index = 0;

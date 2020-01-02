@@ -18,8 +18,12 @@ public class TestForPerformanceMixed {
 
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, InterruptedException, FermesItemException {
 		Database database;
-		database = FermesDB.get(new File("performance_mixed_db/"), 8192, 256, Long.MAX_VALUE);
-
+		File databaseDirectory = new File("performance_mixed_db/");
+		
+		FermesDB.deleteDatabase(databaseDirectory);
+		
+		database = FermesDB.get(databaseDirectory, 8192, 512, Long.MAX_VALUE);
+ 
 		List<Thread> threads = new LinkedList<Thread>();
 
 		int volume = 1000000;

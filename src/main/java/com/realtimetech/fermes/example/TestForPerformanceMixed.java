@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.exception.FermesItemException;
 import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
@@ -15,7 +16,7 @@ import com.realtimetech.fermes.exception.FermesDatabaseException;
 public class TestForPerformanceMixed {
 	
 
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, InterruptedException {
+	public static void main(String[] args) throws FermesDatabaseException, PageIOException, InterruptedException, FermesItemException {
 		Database database;
 		database = FermesDB.get(new File("performance_mixed_db/"), 8192, 256, Long.MAX_VALUE);
 

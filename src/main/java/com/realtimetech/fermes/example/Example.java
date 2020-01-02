@@ -5,6 +5,7 @@ import java.io.File;
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
+import com.realtimetech.fermes.database.exception.FermesItemException;
 import com.realtimetech.fermes.database.item.Item;
 import com.realtimetech.fermes.database.item.Items;
 import com.realtimetech.fermes.database.page.exception.PageIOException;
@@ -66,7 +67,7 @@ public class Example {
 		}
 	}
 
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException {
+	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
 		Database database;
 
 		// Create or

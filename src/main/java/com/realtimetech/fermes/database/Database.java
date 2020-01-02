@@ -83,6 +83,10 @@ public class Database {
 		load();
 	}
 
+	public ArrayList<Page> getPages() {
+		return pages;
+	}
+
 	Database() {
 		this.charset = Charset.forName("UTF-8");
 
@@ -102,7 +106,7 @@ public class Database {
 		this.maxMemory = -1;
 	}
 
-	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws PageIOException {
+	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws PageIOException, FermesItemException {
 		return this.rootItem.get().getLink(name, creator);
 	}
 
@@ -193,7 +197,7 @@ public class Database {
 			for (Link<? extends Item> link : page.getLinks()) {
 				if (link != null) {
 					try {
-						unloadLink(link);
+						unloadLink(link, false);
 					} catch (BlockIOException | FermesItemException e) {
 						e.printStackTrace();
 
@@ -290,7 +294,7 @@ public class Database {
 					}
 
 					if (!object.accessed) {
-						this.unloadLink(object);
+						this.unloadLink(object, false);
 					} else {
 						object.accessed = false;
 
@@ -323,7 +327,7 @@ public class Database {
 				}
 
 				if (!object.accessed) {
-					this.unloadLink(object);
+					this.unloadLink(object, false);
 				} else {
 					object.accessed = false;
 
@@ -341,12 +345,14 @@ public class Database {
 		}
 	}
 
-	private void unloadLink(Link<? extends Item> link) throws BlockIOException, FermesItemException {
+	private void unloadLink(Link<? extends Item> link, boolean justMemory) throws BlockIOException, FermesItemException {
 		if (link.isLoaded()) {
-			byte[] bytes = serialiizeItem(link.item);
+			if (!justMemory) {
+				byte[] bytes = serialiizeItem(link.item);
 
-			link.itemLength = bytes.length;
-			link.getPage().writeBlocks(link.blockIds, bytes);
+				link.itemLength = bytes.length;
+				link.getPage().writeBlocks(link.blockIds, bytes);
+			}
 			link.item = null;
 
 			synchronized (this) {
@@ -405,44 +411,50 @@ public class Database {
 	}
 
 	protected boolean removeLink(Link<? extends Item> link) {
-		if (link.isLoaded()) {
-			try {
-				this.unloadLink(link);
-			} catch (BlockIOException | FermesItemException e) {
-				e.printStackTrace();
+		if (!link.removed) {
+			link.removed = true;
+			
+			if (link.isLoaded()) {
+				try {
+					this.unloadLink(link, true);
+				} catch (BlockIOException | FermesItemException e) {
+					e.printStackTrace();
 
-				return false;
-			}
-		}
-
-		Link<? extends Item> parentLink = this.getLinkByGid(link.parentLink);
-
-		if (parentLink != null) {
-			synchronized (parentLink.childLinks) {
-				parentLink.childLinks.remove(link.gid);
-			}
-		}
-
-		synchronized (link.childLinks) {
-			for (long childLinkGid : link.childLinks) {
-				Link<? extends Item> childLink = this.getLinkByGid(childLinkGid);
-
-				if (childLink != null) {
-					this.removeLink(childLink);
+					return false;
 				}
 			}
+
+			Link<? extends Item> parentLink = this.getLinkByGid(link.parentLink);
+
+			if (parentLink != null) {
+				synchronized (parentLink.childLinks) {
+					parentLink.childLinks.remove(link.gid);
+				}
+			}
+
+			synchronized (link.childLinks) {
+				for (long childLinkGid : link.childLinks) {
+					Link<? extends Item> childLink = this.getLinkByGid(childLinkGid);
+
+					if (childLink != null) {
+						this.removeLink(childLink);
+					}
+				}
+			}
+
+			long gid = link.getGid();
+			int index = (int) (gid % this.pageSize);
+
+			Page page = this.pages.get((int) (gid / this.pageSize));
+
+			page.removeLinkByIndex(link.blockIds, index);
+
+			this.addEmptyPagePointer(new EmptyPagePointer(page, index));
+
+			return true;
 		}
-
-		long gid = link.getGid();
-		int index = (int) (gid % this.pageSize);
-
-		Page page = this.pages.get((int) (gid / this.pageSize));
-
-		page.removeLinkByIndex(link.blockIds, index);
-
-		this.addEmptyPagePointer(new EmptyPagePointer(page, index));
-
-		return true;
+		
+		return false;
 	}
 
 	public void addEmptyPagePointer(EmptyPagePointer emptyPagePointer) {

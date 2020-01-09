@@ -8,3 +8,5 @@ build
 /exception1_db/
 /normal_db/
 /bin/
+/memory_db/
+/memory_lock_db/

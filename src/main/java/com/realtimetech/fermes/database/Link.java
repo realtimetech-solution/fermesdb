@@ -3,7 +3,6 @@ package com.realtimetech.fermes.database;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 
 import com.realtimetech.fermes.database.exception.FermesItemException;
 import com.realtimetech.fermes.database.io.StoreSerializable;

@@ -17,19 +17,18 @@ public class TestForPerformanceMixed {
 	
 
 	public static void main(String[] args) throws FermesDatabaseException, PageIOException, InterruptedException, FermesItemException {
-		Thread.sleep(15000);
 		Database database;
 		File databaseDirectory = new File("performance_mixed_db/");
-		
+
 		FermesDB.deleteDatabase(databaseDirectory);
 		
 		database = FermesDB.get(databaseDirectory, 8192, 512, Long.MAX_VALUE);
  
 		List<Thread> threads = new LinkedList<Thread>();
 
-		int volume = 10000000;
-		int threadCount = 16;
-		int managerCount = 8;
+		int volume = 1000000;
+		int threadCount = 8;
+		int managerCount = 4;
 
 		int localThreadCount = threadCount / 2;
 		for (int i = 0; i < localThreadCount; i++) {

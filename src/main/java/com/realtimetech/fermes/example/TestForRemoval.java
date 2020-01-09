@@ -37,7 +37,7 @@ public class TestForRemoval {
 				}
 
 				for (Link<Dummy> dummy : dummies) {
-					if(dummy.get().getDummys().length != seed) {
+					if(dummy.get().getDummyString().length() != seed) {
 						System.out.println("틀렸는데!?");
 					}
 				}

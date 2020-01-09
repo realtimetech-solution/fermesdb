@@ -1,6 +1,7 @@
 package com.realtimetech.fermes.example;
 
 import java.io.File;
+import java.io.IOException;
 
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
@@ -67,7 +68,7 @@ public class Example {
 		}
 	}
 
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
+	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException, IOException {
 		Database database;
 
 		// Create or
@@ -95,6 +96,6 @@ public class Example {
 		inventory.get().addItem(new GameItem(1000, "초심자의 활"));
 		
 		// Save database
-		database.save();
+		database.saveAndBackup(new File("test.zip"));
 	}
 }

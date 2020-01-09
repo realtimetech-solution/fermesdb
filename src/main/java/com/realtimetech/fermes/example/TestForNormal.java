@@ -8,8 +8,6 @@ import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.item.Item;
-import com.realtimetech.fermes.database.page.Page;
 import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
@@ -51,7 +49,7 @@ public class TestForNormal {
 
 			for (int index = 0; index < loop; index++) {
 				for (Long gid : dummyManager.getChildLinks()) {
-					if (dummyManager.get().getItemByGid(gid).get().getDummys().length != seed) {
+					if (dummyManager.get().getItemByGid(gid).get().getDummyString().length() != seed) {
 						System.err.println("틀린데?");
 					}
 				}
@@ -80,15 +78,15 @@ public class TestForNormal {
 			}
 			System.out.println("******* Validation done!");
 			
-			for(Page page : database.getPages()) {
-				System.out.println(" --- " + page.getId() +  "_page length " + page.getLinks().length);
-				int linkId = 0;
-				for(Link<? extends Item> link : page.getLinks()) {
-					if(link != null) {
-						System.err.println("\t" + linkId + "(" + link.getGid() + ") is not null!");
-					}
-				}
-			}
+//			for(Page page : database.getPages()) {
+//				System.out.println(" --- " + page.getId() +  "_page length " + page.getLinks().length);
+//				int linkId = 0;
+//				for(Link<? extends Item> link : page.getLinks()) {
+//					if(link != null) {
+//						System.err.println("\t" + linkId + "(" + link.getGid() + ") is not null!");
+//					}
+//				}
+//			}
 
 			System.out.println("Memory " + database.getCurrentMemory());
 			database.save();

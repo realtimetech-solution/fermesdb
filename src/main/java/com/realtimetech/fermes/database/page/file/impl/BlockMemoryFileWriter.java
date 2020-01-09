@@ -1,5 +1,6 @@
 package com.realtimetech.fermes.database.page.file.impl;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,7 +47,7 @@ public class BlockMemoryFileWriter extends FileWriter {
 		}
 
 		int index = (int) (pointer / blockSize);
-		
+
 		expendBlocks(index);
 
 		this.blocks.get(index)[(int) (pointer % blockSize)] = value;
@@ -64,16 +65,19 @@ public class BlockMemoryFileWriter extends FileWriter {
 
 	@Override
 	public void writeBytes(byte[] value) throws IOException {
-		for (byte byteValue : value) {
-			this.writeByte(byteValue);
-		}
+		writeBytes(value, 0, value.length);
 	}
 
 	@Override
 	public void writeBytes(byte[] value, int offset, int length) throws IOException {
+		expendBlocks((int) ((pointer + length - 1) / blockSize));
+
 		for (int index = 0; index < length; index++) {
-			this.writeByte(value[offset + index]);
+			long virtualPointer = pointer + index;
+			this.blocks.get((int) (virtualPointer / blockSize))[(int) (virtualPointer % blockSize)] = value[offset + index];
 		}
+
+		pointer += length;
 	}
 
 	@Override
@@ -167,9 +171,7 @@ public class BlockMemoryFileWriter extends FileWriter {
 
 	public void save() throws IOException {
 		createFileIfNotExist();
-		
-		FileOutputStream fileOutputStream = new FileOutputStream(getFile(), false);
-
+		BufferedOutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(getFile(), false));
 		for (byte[] bytes : this.blocks) {
 			fileOutputStream.write(bytes);
 		}
@@ -179,22 +181,22 @@ public class BlockMemoryFileWriter extends FileWriter {
 
 	public void load() throws IOException {
 		createFileIfNotExist();
-		
+
 		File file = getFile();
 		FileInputStream fileInputStream = new FileInputStream(file);
 
 		int index = (int) Math.ceil(file.length() / this.blockSize);
-		
+
 		expendBlocks(index);
-		
+
 		for (byte[] bytes : this.blocks) {
 			int goal = bytes.length;
 
 			while (goal > 0) {
 				int read = fileInputStream.read(bytes);
-				if(read != -1) {
+				if (read != -1) {
 					goal -= read;
-				}else {
+				} else {
 					break;
 				}
 			}

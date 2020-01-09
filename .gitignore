@@ -10,3 +10,8 @@ build
 /bin/
 /memory_db/
 /memory_lock_db/
+/close_db/
+/example_db/
+/removal_db/
+/save_lock_db/
+/test.zip

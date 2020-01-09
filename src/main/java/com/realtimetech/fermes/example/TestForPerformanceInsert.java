@@ -18,12 +18,12 @@ public class TestForPerformanceInsert {
 		FermesDB.deleteDatabase(databaseDirectory);
 		
 		Database database;
-		database = FermesDB.get(databaseDirectory, 8192, 512, Long.MAX_VALUE);
+		database = FermesDB.get(databaseDirectory, 65536, 512, Long.MAX_VALUE);
 
 		List<Thread> threads = new LinkedList<Thread>();
 
 		int volume = 1000000;
-		int threadCount = 16;
+		int threadCount = 8;
 		int managerCount = 4;
 
 		for (int i = 0; i < threadCount; i++) {

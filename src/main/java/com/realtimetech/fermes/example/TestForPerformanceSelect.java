@@ -24,7 +24,7 @@ public class TestForPerformanceSelect {
 		List<Thread> threads = new LinkedList<Thread>();
 
 		int volume = 1000000;
-		int threadCount = 16;
+		int threadCount = 4;
 		int managerCount = 4;
 
 		for (int i = 0; i < threadCount; i++) {

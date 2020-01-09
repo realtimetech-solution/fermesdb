@@ -171,7 +171,9 @@ public class Page extends StoreSerializable {
 	public synchronized void removeLinkByIndex(int[] blockIds, int index) {
 		if (this.links[index] != null) {
 			for (int i = 0; i < blockIds.length; i++) {
-				this.emptyBlockIds.offer(blockIds[i]);
+				synchronized (this.emptyBlockIds) {
+					this.emptyBlockIds.offer(blockIds[i]);
+				}
 
 				blockIds[i] = -1;
 			}
@@ -184,7 +186,7 @@ public class Page extends StoreSerializable {
 		return pageFile;
 	}
 
-	public synchronized int[] fitBlockIds(int[] blockIds, int length) {
+	public int[] fitBlockIds(int[] blockIds, int length) {
 		int needIndexies = (int) Math.ceil((float) length / (float) blockSize);
 
 		int manage = needIndexies - blockIds.length;
@@ -197,10 +199,12 @@ public class Page extends StoreSerializable {
 			if (manage > 0) {
 				for (int index = 0; index < newIds.length; index++) {
 					if (index >= blockIds.length) {
-						if (!this.emptyBlockIds.isEmpty()) {
-							newIds[index] = this.emptyBlockIds.poll();
-						} else {
-							newIds[index] = this.maxBlockId++;
+						synchronized (this.emptyBlockIds) {
+							if (!this.emptyBlockIds.isEmpty()) {
+								newIds[index] = this.emptyBlockIds.poll();
+							} else {
+								newIds[index] = this.maxBlockId++;
+							}
 						}
 					} else {
 						newIds[index] = blockIds[index];
@@ -211,7 +215,9 @@ public class Page extends StoreSerializable {
 
 				for (int index = 0; index < blockIds.length; index++) {
 					if (index >= newIds.length) {
-						this.emptyBlockIds.offer(blockIds[index]);
+						synchronized (this.emptyBlockIds) {
+							this.emptyBlockIds.offer(blockIds[index]);
+						}
 					} else {
 						newIds[index] = blockIds[index];
 					}
@@ -222,14 +228,16 @@ public class Page extends StoreSerializable {
 		}
 	}
 
-	public synchronized void writeBlocks(int[] blockIds, byte[] bytes) throws BlockIOException {
+	public void writeBlocks(int[] blockIds, byte[] bytes) throws BlockIOException {
 		int index = 0;
 		int writeSize = bytes.length;
 		for (Integer blockId : blockIds) {
 			try {
-				this.blockFileWriter.set(blockId * this.blockSize);
+				synchronized (this.blockFileWriter) {
+					this.blockFileWriter.set(blockId * this.blockSize);
 
-				this.blockFileWriter.writeBytes(bytes, (index++) * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
+					this.blockFileWriter.writeBytes(bytes, (index++) * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
+				}
 
 				writeSize -= this.blockSize;
 			} catch (IOException e) {
@@ -266,17 +274,19 @@ public class Page extends StoreSerializable {
 		}
 	}
 
-	public synchronized byte[] readBlocks(int[] blockIds, int itemLength) throws BlockIOException {
+	public byte[] readBlocks(int[] blockIds, int itemLength) throws BlockIOException {
 		byte[] bytes = new byte[itemLength];
 
 		int index = 0;
 		int writeSize = bytes.length;
 		for (Integer blockId : blockIds) {
 			try {
-				this.blockFileWriter.set(blockId * this.blockSize);
+				synchronized (this.blockFileWriter) {
+					this.blockFileWriter.set(blockId * this.blockSize);
 
-				this.blockFileWriter.readBytes(bytes, (index++) * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
-
+					this.blockFileWriter.readBytes(bytes, (index++) * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
+				}
+				
 				writeSize -= this.blockSize;
 			} catch (IOException e) {
 				throw new BlockIOException("Can't write blocks.");

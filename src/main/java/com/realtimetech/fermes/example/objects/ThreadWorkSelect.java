@@ -26,7 +26,6 @@ public class ThreadWorkSelect implements Runnable {
 				try {
 					if (itemCount == 0) {
 						i--;
-						System.out.println("데이터가 없어서 롤백..!");
 					} else {
 						DummyManager dummyManager2 = dummyManager.get();
 						try {

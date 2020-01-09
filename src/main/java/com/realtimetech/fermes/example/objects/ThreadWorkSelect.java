@@ -32,11 +32,10 @@ public class ThreadWorkSelect implements Runnable {
 						try {
 							int nextInt = random.nextInt(itemCount);
 							Link<Dummy> itemByGid = dummyManager2.getItem(nextInt);
+							@SuppressWarnings("unused")
 							Dummy dummy = itemByGid.get();
-							dummy.getDummys();
 						} catch (NullPointerException e) {
 							e.printStackTrace();
-
 						}
 					}
 				} catch (PageIOException e) {

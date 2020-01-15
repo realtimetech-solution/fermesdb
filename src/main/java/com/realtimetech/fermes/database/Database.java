@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import com.realtimetech.fermes.database.exception.FermesItemException;
@@ -56,6 +57,8 @@ public class Database {
 	private Lock diskLock;
 	private Lock processLock;
 
+	private List<Link<? extends Item>> frozeLinks;
+
 	public Database(File databaseDirectory) throws FermesDatabaseException {
 		this();
 
@@ -94,6 +97,7 @@ public class Database {
 
 		this.charset = Charset.forName("UTF-8");
 
+		this.frozeLinks = new LinkedList<Link<? extends Item>>();
 		this.pages = new ArrayList<Page>();
 		this.emptyPagePointers = new LinkedList<EmptyPagePointer>();
 		this.pageSerializer = new PageSerializer(this);
@@ -372,69 +376,85 @@ public class Database {
 		}
 	}
 
+	synchronized void fitMemory(long size) throws BlockIOException, FermesItemException {
+		this.frozeLinks.clear();
+		while (this.currentMemory + size > this.maxMemory) {
+			Link<? extends Item> object = this.tailObject;
+
+			if (object == null) {
+				break;
+			}
+
+			if (!object.accessed && !object.froze) {
+				this.unloadLink(object, false);
+			} else {
+				object.accessed = false;
+				remove(object);
+
+				if (object.froze) {
+					this.frozeLinks.add(object);
+				} else {
+					join(object);
+				}
+			}
+		}
+
+		for (Link<? extends Item> object : this.frozeLinks) {
+			join(object);
+		}
+	}
+
 	/**
 	 * Load, unload, update link methods
 	 */
 
 	@SuppressWarnings("unchecked")
 	protected <R extends Item> void loadLink(Link<R> link) throws BlockIOException, FermesItemException {
-		if (!link.isLoaded()) {
-			try {
-				this.processLock.tryLock();
-				this.diskLock.waitLock();
+		synchronized (link) {
+			if (!link.isLoaded()) {
+				try {
+					this.processLock.tryLock();
+					this.diskLock.waitLock();
 
-				byte[] bytes = link.getPage().readBlocks(link.blockIds, link.itemLength);
+					byte[] bytes = link.getPage().readBlocks(link.blockIds, link.itemLength);
 
-				synchronized (this) {
-					while (this.currentMemory + bytes.length > this.maxMemory) {
-						Link<? extends Item> object = this.tailObject;
+					this.fitMemory(bytes.length);
 
-						if (object == null) {
-							break;
-						}
+					link.itemLength = bytes.length;
+					link.item = (R) deserializeItem(bytes);
 
-						if (!object.accessed) {
-							this.unloadLink(object, false);
-						} else {
-							object.accessed = false;
+					link.item.onLoad(link);
 
-							remove(object);
-							join(object);
-						}
+					synchronized (this) {
+						join(link);
+						this.currentMemory += link.itemLength;
 					}
+				} finally {
+					this.processLock.unlock();
 				}
-
-				link.itemLength = bytes.length;
-				link.item = (R) deserializeItem(bytes);
-				link.item.onLoad(link);
-
-				synchronized (this) {
-					join(link);
-					this.currentMemory += link.itemLength;
-				}
-			} finally {
-				this.processLock.unlock();
 			}
 		}
 	}
 
 	private void unloadLink(Link<? extends Item> link, boolean justMemory) throws BlockIOException, FermesItemException {
-		if (link.isLoaded()) {
-			try {
-				this.processLock.tryLock();
-				this.diskLock.waitLock();
+		synchronized (link) {
+			if (link.isLoaded()) {
+				try {
+					this.processLock.tryLock();
+					this.diskLock.waitLock();
 
-				if (!justMemory) {
-					writeLinkBlocks(link);
-				}
-				link.item = null;
+					if (!justMemory) {
+						writeLinkBlocks(link);
+					}
+					link.item = null;
 
-				synchronized (this) {
-					remove(link);
-					this.currentMemory -= link.itemLength;
+					synchronized (this) {
+						remove(link);
+						this.currentMemory -= link.itemLength;
+					}
+				} finally {
+					this.processLock.unlock();
 				}
-			} finally {
-				this.processLock.unlock();
 			}
 		}
 	}
@@ -456,24 +476,7 @@ public class Database {
 
 			byte[] bytes = serializeItem(link.item);
 
-			synchronized (this) {
-				while (this.currentMemory + bytes.length > this.maxMemory) {
-					Link<? extends Item> object = this.tailObject;
-
-					if (object == null) {
-						break;
-					}
-
-					if (!object.accessed) {
-						this.unloadLink(object, false);
-					} else {
-						object.accessed = false;
-
-						remove(object);
-						join(object);
-					}
-				}
-			}
+			this.fitMemory(bytes.length);
 
 			link.itemLength = bytes.length;
 

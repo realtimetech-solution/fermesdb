@@ -19,6 +19,10 @@ public class RootItem implements Item {
 		this.linkMap = new HashMap<String, Link<? extends Item>>();
 	}
 
+	public HashMap<String, Link<? extends Item>> getLinkMap() {
+		return linkMap;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws PageIOException {
 		if (!linkMap.containsKey(name)) {

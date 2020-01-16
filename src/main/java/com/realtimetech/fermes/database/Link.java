@@ -28,7 +28,7 @@ public class Link<R extends Item> extends StoreSerializable {
 			long length = 0;
 
 			length += 8;
-			length += 8;
+			length += 8; 
 			length += 8;
 
 			length += 4;
@@ -95,6 +95,7 @@ public class Link<R extends Item> extends StoreSerializable {
 
 	protected Link<? extends Item> nextObject;
 	protected Link<? extends Item> prevObject;
+	
 	protected boolean accessed;
 	protected boolean removed = false;
 	protected boolean froze = false;

@@ -71,7 +71,8 @@ public class Database {
 		}
 	}
 
-	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws FermesDatabaseException {
+	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory)
+			throws FermesDatabaseException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -118,8 +119,13 @@ public class Database {
 	 * Getting root links
 	 */
 
-	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws PageIOException, FermesItemException {
+	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator)
+			throws PageIOException, FermesItemException {
 		return this.rootItem.get().getLink(name, creator);
+	}
+
+	public Link<RootItem> getRootItem() {
+		return rootItem;
 	}
 
 	/**
@@ -153,7 +159,7 @@ public class Database {
 				jsonObject.put("maxMemory", this.maxMemory);
 
 				try {
-					Files.writeString(configFile.toPath(), jsonObject.toKsonString());
+					Files.write(configFile.toPath(), jsonObject.toKsonString().getBytes(this.charset));
 				} catch (IOException e) {
 					throw new FermesDatabaseException("Can't create database, access denied when create config file.");
 				}
@@ -168,7 +174,8 @@ public class Database {
 			JsonObject jsonObject;
 
 			try {
-				jsonObject = (JsonObject) ksonPool.get().fromString(Files.readString(configFile.toPath()));
+				jsonObject = (JsonObject) ksonPool.get()
+						.fromString(new String(Files.readAllBytes(configFile.toPath()), charset));
 			} catch (IOException e) {
 				throw new FermesDatabaseException("Can't load database, IOException in parse json config.");
 			}
@@ -216,7 +223,8 @@ public class Database {
 			jsonObject.put("maxMemory", this.maxMemory);
 
 			try {
-				Files.writeString(new File(databaseDirectory, "database.config").toPath(), jsonObject.toKsonString());
+				Files.write(new File(databaseDirectory, "database.config").toPath(),
+						jsonObject.toKsonString().getBytes(this.charset));
 			} catch (IOException e) {
 				throw new FermesDatabaseException("Can't save database, access denied when save config file.");
 			}
@@ -237,7 +245,8 @@ public class Database {
 				}
 
 				try {
-					MemoryFileWriter pageBuffer = new MemoryFileWriter(pageSerializer.getWriteLength(page), page.getPageFile());
+					MemoryFileWriter pageBuffer = new MemoryFileWriter(pageSerializer.getWriteLength(page),
+							page.getPageFile());
 					pageSerializer.write(page, pageBuffer);
 					pageBuffer.save();
 				} catch (IOException e) {
@@ -368,7 +377,9 @@ public class Database {
 		try {
 			JsonObject jsonObject = (JsonObject) ksonPool.get().fromString(new String(bytes, charset));
 
-			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), jsonObject.get("item"));
+			Object object = ksonPool.get().toObject(
+					Database.class.getClassLoader().loadClass((String) jsonObject.get("class")),
+					jsonObject.get("item"));
 
 			return (Item) object;
 		} catch (IOException | ClassNotFoundException | DeserializeException e) {
@@ -436,7 +447,8 @@ public class Database {
 		}
 	}
 
-	private void unloadLink(Link<? extends Item> link, boolean justMemory) throws BlockIOException, FermesItemException {
+	private void unloadLink(Link<? extends Item> link, boolean justMemory)
+			throws BlockIOException, FermesItemException {
 		synchronized (link) {
 			if (link.isLoaded()) {
 				try {

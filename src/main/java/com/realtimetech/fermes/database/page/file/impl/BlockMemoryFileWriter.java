@@ -204,4 +204,9 @@ public class BlockMemoryFileWriter extends FileWriter {
 
 		fileInputStream.close();
 	}
+
+	@Override
+	public void close() throws IOException {
+		
+	}
 }

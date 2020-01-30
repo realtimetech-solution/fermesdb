@@ -80,4 +80,9 @@ public class RandomAccessFileWriter extends FileWriter {
 	public long readLong() throws IOException {
 		return this.randomAccessFile.readLong();
 	}
+
+	@Override
+	public void close() throws IOException {
+		this.randomAccessFile.close();		
+	}
 }

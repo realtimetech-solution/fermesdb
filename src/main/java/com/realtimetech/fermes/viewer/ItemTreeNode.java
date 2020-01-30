@@ -3,7 +3,6 @@ package com.realtimetech.fermes.viewer;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
 import com.realtimetech.fermes.database.item.Item;
 
 public class ItemTreeNode extends DefaultMutableTreeNode {
@@ -11,7 +10,7 @@ public class ItemTreeNode extends DefaultMutableTreeNode {
 
 	private Link<? extends Item> link;
 
-	public ItemTreeNode(int index, Link<? extends Item> link) throws FermesItemException {
+	public ItemTreeNode(int index, Link<? extends Item> link) {
 		super(link.isLoaded() ? link.get().getClass().getSimpleName() + " [ " + link.getGid() + " ]"
 				: "[ " + link.getGid() + " ]");
 

@@ -1,16 +1,13 @@
 package com.realtimetech.fermes.example;
 
 import java.io.File;
-import java.io.IOException;
 
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
 import com.realtimetech.fermes.database.item.Item;
 import com.realtimetech.fermes.database.item.Items;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
+import com.realtimetech.fermes.database.link.exception.LinkCreateException;
 
 public class Example {
 	public static class UserManager extends Items<User> {
@@ -28,7 +25,7 @@ public class Example {
 		public void onCreate(Link<? extends Item> link) {
 			try {
 				this.inventory = link.createChildLink(new Inventory());
-			} catch (PageIOException e) {
+			} catch (LinkCreateException e) {
 				e.printStackTrace();
 			}
 		}
@@ -68,7 +65,7 @@ public class Example {
 		}
 	}
 
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException, IOException {
+	public static void main(String[] args) throws Exception {
 		Database database;
 		File databaseDirectory = new File("example_db/");
 

@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.realtimetech.fermes.database.exception.FermesItemException;
 import com.realtimetech.fermes.database.io.StoreSerializable;
 import com.realtimetech.fermes.database.io.StoreSerializer;
 import com.realtimetech.fermes.database.item.Item;
+import com.realtimetech.fermes.database.item.exception.ItemDeserializeException;
+import com.realtimetech.fermes.database.link.exception.LinkCreateException;
+import com.realtimetech.fermes.database.link.exception.LinkRemoveException;
+import com.realtimetech.fermes.database.memory.exception.MemoryManageException;
 import com.realtimetech.fermes.database.page.Page;
-import com.realtimetech.fermes.database.page.exception.BlockIOException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
+import com.realtimetech.fermes.database.page.exception.BlockReadException;
 import com.realtimetech.fermes.database.page.file.impl.MemoryFileWriter;
 
 public class Link<R extends Item> extends StoreSerializable {
@@ -28,7 +30,7 @@ public class Link<R extends Item> extends StoreSerializable {
 			long length = 0;
 
 			length += 8;
-			length += 8; 
+			length += 8;
 			length += 8;
 
 			length += 4;
@@ -95,7 +97,7 @@ public class Link<R extends Item> extends StoreSerializable {
 
 	protected Link<? extends Item> nextObject;
 	protected Link<? extends Item> prevObject;
-	
+
 	protected boolean accessed;
 	protected boolean removed = false;
 	protected boolean froze = false;
@@ -171,9 +173,9 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.froze = false;
 	}
 
-	public R get() throws FermesItemException {
+	public R get() {
 		if (this.removed) {
-			throw new FermesItemException("Can't access this link, already removed!");
+			return null;
 		}
 
 		synchronized (this) {
@@ -182,9 +184,8 @@ public class Link<R extends Item> extends StoreSerializable {
 			if (!isLoaded()) {
 				try {
 					this.getDatabase().loadLink(this);
-				} catch (BlockIOException | FermesItemException e) {
+				} catch (MemoryManageException | BlockReadException | ItemDeserializeException e) {
 					e.printStackTrace();
-					// TODO CRASHED DB...
 				}
 			}
 
@@ -194,7 +195,7 @@ public class Link<R extends Item> extends StoreSerializable {
 		}
 	}
 
-	public Link<? extends Item> getChildLinkItem(int index) throws PageIOException {
+	public Link<? extends Item> getChildLinkItem(int index) {
 		if (this.childLinks == null) {
 			return null;
 		}
@@ -204,11 +205,11 @@ public class Link<R extends Item> extends StoreSerializable {
 		}
 	}
 
-	public <V extends Item> Link<V> createChildLink(V item) throws PageIOException {
+	public <V extends Item> Link<V> createChildLink(V item) throws LinkCreateException {
 		return getDatabase().createLink(this, item);
 	}
 
-	public boolean removeChildLink(Link<? extends Item> link) throws PageIOException {
+	public boolean removeChildLink(Link<? extends Item> link) throws LinkRemoveException {
 		return getDatabase().removeLink(link);
 	}
 }

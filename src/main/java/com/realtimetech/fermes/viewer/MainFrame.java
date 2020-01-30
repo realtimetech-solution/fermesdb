@@ -29,10 +29,10 @@ import javax.swing.JMenu;
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
+import com.realtimetech.fermes.database.exception.DatabaseCloseException;
+import com.realtimetech.fermes.database.exception.DatabaseReadException;
 import com.realtimetech.fermes.database.item.Item;
 import com.realtimetech.fermes.database.root.RootItem;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 import com.realtimetech.kson.KsonContext;
 import com.realtimetech.kson.element.JsonArray;
 import com.realtimetech.kson.element.JsonObject;
@@ -78,7 +78,7 @@ public class MainFrame extends JFrame {
 	 * 
 	 * @throws FermesDatabaseException
 	 */
-	public MainFrame(String databaseDirectory) throws FermesDatabaseException {
+	public MainFrame(String databaseDirectory) {
 		this.ksonContext = new KsonContext();
 		this.ksonContext.registerTransformer(Link.class, new Transformer<Link<? extends Item>>() {
 			@Override
@@ -130,12 +130,10 @@ public class MainFrame extends JFrame {
 					if (jFileChooser.getSelectedFile().getParentFile().isDirectory()) {
 						File parentFile = jFileChooser.getSelectedFile().getParentFile();
 
-						Database loadDatabase;
 						try {
-							loadDatabase = FermesDB.loadDatabase(parentFile);
-							database = loadDatabase;
+							database = FermesDB.loadDatabase(parentFile);
 							updateTree();
-						} catch (FermesDatabaseException e) {
+						} catch (DatabaseReadException e) {
 							e.printStackTrace();
 						}
 
@@ -153,7 +151,7 @@ public class MainFrame extends JFrame {
 				if (database != null) {
 					try {
 						database.close();
-					} catch (FermesDatabaseException e) {
+					} catch (DatabaseCloseException e) {
 						e.printStackTrace();
 					}
 				}
@@ -214,17 +212,12 @@ public class MainFrame extends JFrame {
 						int index = 0;
 						for (Long gid : childLinks) {
 							Link<? extends Item> childLink = link.getDatabase().getLinkByGid(gid);
-							try {
-								childLink.get();
-							} catch (FermesItemException e) {
-								e.printStackTrace();
+
+							if (childLink.get() == null) {
+								System.out.println("NULL");
 							}
 
-							try {
-								readDatabaseChild(parent, index++, childLink);
-							} catch (FermesItemException e) {
-								e.printStackTrace();
-							}
+							readDatabaseChild(parent, index++, childLink);
 						}
 
 					}
@@ -252,7 +245,7 @@ public class MainFrame extends JFrame {
 						try {
 							Item object = link.get();
 							targetObject = (JsonObject) ksonContext.fromObject(object);
-						} catch (SerializeException | FermesItemException e) {
+						} catch (SerializeException e) {
 							e.printStackTrace();
 						}
 
@@ -275,18 +268,14 @@ public class MainFrame extends JFrame {
 				DefaultMutableTreeNode root = new DefaultMutableTreeNode(this.targetObject.toString());
 				DefaultTreeModel rootTree = new DefaultTreeModel(root);
 
-				try {
-					readJsonChild(root, this.targetObject);
-				} catch (FermesItemException e) {
-					e.printStackTrace();
-				}
+				readJsonChild(root, this.targetObject);
 
 				treeJson.setModel(rootTree);
 			}
 		}
 	}
 
-	public void readJsonChild(DefaultMutableTreeNode parent, Object object) throws FermesItemException {
+	public void readJsonChild(DefaultMutableTreeNode parent, Object object) {
 		parent.removeAllChildren();
 
 		if (object instanceof JsonObject) {
@@ -324,27 +313,21 @@ public class MainFrame extends JFrame {
 			DefaultTreeModel rootTree = new DefaultTreeModel(root);
 			Link<RootItem> rootItem = database.getRootItem();
 
-			try {
-				HashMap<String, Link<? extends Item>> linkMap = rootItem.get().getLinkMap();
+			HashMap<String, Link<? extends Item>> linkMap = rootItem.get().getLinkMap();
 
-				int childIndex = 0;
-				for (String key : linkMap.keySet()) {
-					Link<? extends Item> link = linkMap.get(key);
+			int childIndex = 0;
+			for (String key : linkMap.keySet()) {
+				Link<? extends Item> link = linkMap.get(key);
 
-					link.get();
-					readDatabaseChild(root, childIndex++, link);
-				}
-			} catch (FermesItemException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				link.get();
+				readDatabaseChild(root, childIndex++, link);
 			}
 
 			tree.setModel(rootTree);
 		}
 	}
 
-	public void readDatabaseChild(DefaultMutableTreeNode parent, int index, Link<? extends Item> link)
-			throws FermesItemException {
+	public void readDatabaseChild(DefaultMutableTreeNode parent, int index, Link<? extends Item> link) {
 		ItemTreeNode itemTreeNode = new ItemTreeNode(index, link);
 
 		Collection<Long> childLinks = link.getChildLinks();

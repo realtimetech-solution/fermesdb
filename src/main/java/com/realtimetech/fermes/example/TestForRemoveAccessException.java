@@ -6,14 +6,11 @@ import java.util.Random;
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 
 public class TestForRemoveAccessException {
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
+	public static void main(String[] args) throws Exception {
 
 		Random random = new Random();
 		int seed = random.nextInt(400) + 10;
@@ -25,11 +22,13 @@ public class TestForRemoveAccessException {
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
 			Link<Dummy> dummy = dummyManager.get().addItem(new Dummy(seed));
+
+			System.out.println("Hi " + dummy.get());
 			
 			dummyManager.removeChildLink(dummy);
-			
-			dummy.get();
-			
+
+			System.out.println("Hi " + dummy.get());
+
 			System.out.println("Saved! Memory " + database.getCurrentMemory());
 		}
 

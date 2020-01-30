@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.item.Item;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
+import com.realtimetech.fermes.database.link.exception.LinkCreateException;
 
 public class RootItem implements Item {
 	@FunctionalInterface
@@ -24,7 +24,7 @@ public class RootItem implements Item {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws PageIOException {
+	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws LinkCreateException {
 		if (!linkMap.containsKey(name)) {
 			linkMap.put(name, this.currentLink.createChildLink(creator.build()));
 		}

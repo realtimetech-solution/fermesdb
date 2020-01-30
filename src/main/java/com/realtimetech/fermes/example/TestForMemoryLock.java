@@ -6,14 +6,11 @@ import java.util.List;
 
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreateInfinity;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 
 public class TestForMemoryLock {
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException, InterruptedException {
+	public static void main(String[] args) throws Exception {
 		Database database;
 		File databaseDirectory = new File("memory_lock_db/");
 		FermesDB.deleteDatabase(databaseDirectory);

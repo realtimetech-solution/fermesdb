@@ -3,8 +3,6 @@ package com.realtimetech.fermes.example.objects;
 import java.util.Random;
 
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
 
 public class ThreadWorkSelect implements Runnable {
 	private Link<DummyManager> dummyManager;
@@ -20,28 +18,20 @@ public class ThreadWorkSelect implements Runnable {
 		Random random = new Random();
 
 		for (int i = 0; i < volume; i++) {
-			try {
-				int itemCount = dummyManager.get().getItemCount();
+			int itemCount = dummyManager.get().getItemCount();
 
+			if (itemCount == 0) {
+				i--;
+			} else {
+				DummyManager dummyManager2 = dummyManager.get();
 				try {
-					if (itemCount == 0) {
-						i--;
-					} else {
-						DummyManager dummyManager2 = dummyManager.get();
-						try {
-							int nextInt = random.nextInt(itemCount);
-							Link<Dummy> itemByGid = dummyManager2.getItem(nextInt);
-							@SuppressWarnings("unused")
-							Dummy dummy = itemByGid.get();
-						} catch (NullPointerException e) {
-							e.printStackTrace();
-						}
-					}
-				} catch (PageIOException e) {
+					int nextInt = random.nextInt(itemCount);
+					Link<Dummy> itemByGid = dummyManager2.getItem(nextInt);
+					@SuppressWarnings("unused")
+					Dummy dummy = itemByGid.get();
+				} catch (NullPointerException e) {
 					e.printStackTrace();
 				}
-			} catch (FermesItemException e) {
-				e.printStackTrace();
 			}
 		}
 	}

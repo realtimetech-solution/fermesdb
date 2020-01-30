@@ -13,6 +13,7 @@ public abstract class FileWriter {
 	public File getFile() {
 		return file;
 	}
+	public abstract void close() throws IOException;
 
 	public abstract void reset() throws IOException;
 

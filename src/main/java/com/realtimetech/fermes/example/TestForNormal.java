@@ -7,14 +7,11 @@ import java.util.Random;
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 
 public class TestForNormal {
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
+	public static void main(String[] args) throws Exception {
 		int loop = 32;
 		int size = 256;
 

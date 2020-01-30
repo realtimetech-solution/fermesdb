@@ -194,4 +194,9 @@ public class MemoryFileWriter extends FileWriter {
 
 		fileInputStream.close();
 	}
+
+	@Override
+	public void close() throws IOException {
+		
+	}
 }

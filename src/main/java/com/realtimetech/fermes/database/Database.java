@@ -9,21 +9,30 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import com.realtimetech.fermes.database.exception.FermesItemException;
+import com.realtimetech.fermes.database.exception.DatabaseBackupException;
+import com.realtimetech.fermes.database.exception.DatabaseCloseException;
+import com.realtimetech.fermes.database.exception.DatabaseReadException;
+import com.realtimetech.fermes.database.exception.DatabaseWriteException;
 import com.realtimetech.fermes.database.item.Item;
+import com.realtimetech.fermes.database.item.exception.ItemDeserializeException;
+import com.realtimetech.fermes.database.item.exception.ItemSerializeException;
+import com.realtimetech.fermes.database.link.exception.LinkCreateException;
+import com.realtimetech.fermes.database.link.exception.LinkRemoveException;
 import com.realtimetech.fermes.database.lock.Lock;
+import com.realtimetech.fermes.database.memory.exception.MemoryManageException;
 import com.realtimetech.fermes.database.page.EmptyPagePointer;
 import com.realtimetech.fermes.database.page.Page;
 import com.realtimetech.fermes.database.page.Page.PageSerializer;
-import com.realtimetech.fermes.database.page.exception.BlockIOException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
+import com.realtimetech.fermes.database.page.exception.BlockReadException;
+import com.realtimetech.fermes.database.page.exception.BlockWriteException;
+import com.realtimetech.fermes.database.page.exception.PageCreateException;
 import com.realtimetech.fermes.database.page.file.impl.MemoryFileWriter;
 import com.realtimetech.fermes.database.root.RootItem;
 import com.realtimetech.fermes.database.root.RootItem.ItemCreator;
 import com.realtimetech.fermes.database.zip.ZipUtils;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 import com.realtimetech.kson.builder.KsonBuilder;
 import com.realtimetech.kson.element.JsonObject;
+import com.realtimetech.kson.element.JsonValue;
 import com.realtimetech.kson.exception.DeserializeException;
 import com.realtimetech.kson.exception.SerializeException;
 import com.realtimetech.kson.util.pool.KsonPool;
@@ -59,7 +68,7 @@ public class Database {
 
 	private List<Link<? extends Item>> frozeLinks;
 
-	public Database(File databaseDirectory) throws FermesDatabaseException {
+	public Database(File databaseDirectory) throws DatabaseReadException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -67,12 +76,11 @@ public class Database {
 		load();
 
 		if (this.blockSize == -1 || this.maxMemory == -1) {
-			throw new FermesDatabaseException("Can't load database, not exist database.");
+			throw new DatabaseReadException("Can't load database, not exist database.");
 		}
 	}
 
-	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory)
-			throws FermesDatabaseException {
+	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws DatabaseReadException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -81,7 +89,7 @@ public class Database {
 			File configFile = new File(databaseDirectory, "database.config");
 
 			if (configFile.exists()) {
-				throw new FermesDatabaseException("Can't create database with parameters.");
+				throw new DatabaseReadException("Can't create database with parameters.");
 			}
 		}
 
@@ -119,8 +127,7 @@ public class Database {
 	 * Getting root links
 	 */
 
-	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator)
-			throws PageIOException, FermesItemException {
+	public <T extends Item> Link<T> getLink(String name, ItemCreator<T> creator) throws LinkCreateException {
 		return this.rootItem.get().getLink(name, creator);
 	}
 
@@ -133,7 +140,7 @@ public class Database {
 	 */
 
 	@SuppressWarnings("unchecked")
-	private void load() throws FermesDatabaseException {
+	private void load() throws DatabaseReadException {
 		try {
 			this.processLock.waitLock();
 			this.diskLock.lock();
@@ -147,8 +154,8 @@ public class Database {
 			if (!configFile.exists()) {
 				try {
 					configFile.createNewFile();
-				} catch (IOException e1) {
-					throw new FermesDatabaseException("Can't create database, access denied when create config file.");
+				} catch (IOException e) {
+					throw new DatabaseReadException("Can't create database, access denied when create config file.");
 				}
 
 				JsonObject jsonObject = new JsonObject();
@@ -161,23 +168,22 @@ public class Database {
 				try {
 					Files.write(configFile.toPath(), jsonObject.toKsonString().getBytes(this.charset));
 				} catch (IOException e) {
-					throw new FermesDatabaseException("Can't create database, access denied when create config file.");
+					throw new DatabaseReadException("Can't create database, access denied when create config file.");
 				}
 
 				try {
 					this.rootItem = this.createLink(null, new RootItem());
-				} catch (PageIOException e) {
-					throw new FermesDatabaseException("Can't create database, failure creation root link(0).");
+				} catch (LinkCreateException e) {
+					throw new DatabaseReadException(e, "Can't create database, failure to create root link(0).");
 				}
 			}
 
 			JsonObject jsonObject;
 
 			try {
-				jsonObject = (JsonObject) ksonPool.get()
-						.fromString(new String(Files.readAllBytes(configFile.toPath()), charset));
+				jsonObject = (JsonObject) ksonPool.get().fromString(new String(Files.readAllBytes(configFile.toPath()), charset));
 			} catch (IOException e) {
-				throw new FermesDatabaseException("Can't load database, IOException in parse json config.");
+				throw new DatabaseReadException(e, "Can't load database, IOException in parse json config.");
 			}
 
 			this.pageSize = (int) jsonObject.get("pageSize");
@@ -193,9 +199,8 @@ public class Database {
 					pageBuffer.load();
 
 					pageSerializer.read(page, pageBuffer);
-				} catch (IOException e) {
-					e.printStackTrace();
-					throw new FermesDatabaseException("Can't load database, IOException in parse page files.");
+				} catch (PageCreateException | IOException e) {
+					throw new DatabaseReadException(e, "Can't load database, IOException in parse page files.");
 				}
 			}
 			System.gc();
@@ -203,14 +208,14 @@ public class Database {
 			this.rootItem = (Link<RootItem>) this.getLinkByGid(0);
 
 			if (this.rootItem == null) {
-				throw new FermesDatabaseException("Can't create database, failure load root link(0).");
+				throw new DatabaseReadException("Can't create database, failure load root link(0).");
 			}
 		} finally {
 			this.diskLock.unlock();
 		}
 	}
 
-	public void save() throws FermesDatabaseException {
+	public void save() throws DatabaseWriteException {
 		try {
 			this.processLock.waitLock();
 			this.diskLock.lock();
@@ -223,10 +228,9 @@ public class Database {
 			jsonObject.put("maxMemory", this.maxMemory);
 
 			try {
-				Files.write(new File(databaseDirectory, "database.config").toPath(),
-						jsonObject.toKsonString().getBytes(this.charset));
+				Files.write(new File(databaseDirectory, "database.config").toPath(), jsonObject.toKsonString().getBytes(this.charset));
 			} catch (IOException e) {
-				throw new FermesDatabaseException("Can't save database, access denied when save config file.");
+				throw new DatabaseWriteException(e, "Can't save database, access denied when save config file.");
 			}
 
 			for (Page page : this.pages) {
@@ -236,28 +240,24 @@ public class Database {
 					if (link != null) {
 						try {
 							writeLinkBlocks(link);
-						} catch (BlockIOException | FermesItemException e) {
-							e.printStackTrace();
-
-							throw new FermesDatabaseException("Can't save database, BlockIOException in save links.");
+						} catch (ItemSerializeException | BlockWriteException e) {
+							throw new DatabaseWriteException(e, "Can't save database, write link.");
 						}
 					}
 				}
 
 				try {
-					MemoryFileWriter pageBuffer = new MemoryFileWriter(pageSerializer.getWriteLength(page),
-							page.getPageFile());
+					MemoryFileWriter pageBuffer = new MemoryFileWriter(pageSerializer.getWriteLength(page), page.getPageFile());
 					pageSerializer.write(page, pageBuffer);
 					pageBuffer.save();
 				} catch (IOException e) {
-					e.printStackTrace();
-					throw new FermesDatabaseException("Can't save database, IOException in save page files.");
+					throw new DatabaseWriteException(e, "Can't save database, IOException in save page files.");
 				}
 
 				try {
 					page.disableBlocksDirectly();
 				} catch (IOException e) {
-					throw new FermesDatabaseException("Can't save database, IOException in save buffer.");
+					throw new DatabaseWriteException(e, "Can't save database, IOException in save buffer.");
 				}
 			}
 		} finally {
@@ -265,7 +265,7 @@ public class Database {
 		}
 	}
 
-	public void saveAndBackup(File backupFile) throws FermesDatabaseException, IOException {
+	public void saveAndBackup(File backupFile) throws DatabaseWriteException, DatabaseBackupException {
 		try {
 			this.processLock.waitLock();
 			this.diskLock.lock();
@@ -273,18 +273,18 @@ public class Database {
 			save();
 
 			ZipUtils.zipFolder(databaseDirectory, backupFile);
+		} catch (IOException e) {
+			throw new DatabaseBackupException(e, "Failure to backup, because occurred compress zip exception.");
 		} finally {
 			this.diskLock.unlock();
 		}
 
 	}
 
-	public void close() throws FermesDatabaseException {
+	public void close() throws DatabaseCloseException {
 		try {
 			this.processLock.waitLock();
 			this.diskLock.lock();
-
-			save();
 
 			for (Page page : this.pages) {
 				int index = 0;
@@ -292,10 +292,8 @@ public class Database {
 					if (link != null) {
 						try {
 							unloadLink(link, true);
-						} catch (BlockIOException | FermesItemException e) {
-							e.printStackTrace();
-
-							throw new FermesDatabaseException("Can't unload database, BlockIOException in save links.");
+						} catch (ItemSerializeException | BlockWriteException e) {
+							throw new DatabaseCloseException(e, "Failure to close, because occurred unload link.");
 						}
 						page.getLinks()[index] = null;
 					}
@@ -361,7 +359,7 @@ public class Database {
 	 * Serialize / deserialize item methods
 	 */
 
-	private byte[] serializeItem(Item item) throws FermesItemException {
+	private byte[] serializeItem(Item item) throws ItemSerializeException {
 		try {
 			JsonObject jsonObject = new JsonObject();
 			jsonObject.put("class", item.getClass().getName());
@@ -369,35 +367,37 @@ public class Database {
 
 			return ksonPool.writer().toString(jsonObject).getBytes(charset);
 		} catch (SerializeException e) {
-			throw new FermesItemException("Can't serialize object (item to bytes).");
+			throw new ItemSerializeException(e, "Can't serialize object (item to bytes).");
 		}
 	}
 
-	private Item deserializeItem(byte[] bytes) throws FermesItemException {
+	private Item deserializeItem(byte[] bytes) throws ItemDeserializeException {
 		try {
 			JsonObject jsonObject = (JsonObject) ksonPool.get().fromString(new String(bytes, charset));
 
-			Object object = ksonPool.get().toObject(
-					Database.class.getClassLoader().loadClass((String) jsonObject.get("class")),
-					jsonObject.get("item"));
+			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), (JsonValue)jsonObject.get("item"));
 
 			return (Item) object;
 		} catch (IOException | ClassNotFoundException | DeserializeException e) {
-			throw new FermesItemException("Can't serialize object (item to bytes).");
+			throw new ItemDeserializeException(e, "Can't deserialize object (bytes to item).");
 		}
 	}
 
-	synchronized void fitMemory(long size) throws BlockIOException, FermesItemException {
+	synchronized void fitMemory(long size) throws MemoryManageException {
 		this.frozeLinks.clear();
 		while (this.currentMemory + size > this.maxMemory) {
 			Link<? extends Item> object = this.tailObject;
 
 			if (object == null) {
-				break;
+				throw new MemoryManageException("Can't unload object anymore, but still memory not enough.");
 			}
 
 			if (!object.accessed && !object.froze) {
-				this.unloadLink(object, false);
+				try {
+					this.unloadLink(object, false);
+				} catch (ItemSerializeException | BlockWriteException e) {
+					throw new MemoryManageException(e, "Failure to unload item from memory.");
+				}
 			} else {
 				object.accessed = false;
 				remove(object);
@@ -420,7 +420,7 @@ public class Database {
 	 */
 
 	@SuppressWarnings("unchecked")
-	protected <R extends Item> void loadLink(Link<R> link) throws BlockIOException, FermesItemException {
+	protected <R extends Item> void loadLink(Link<R> link) throws MemoryManageException, BlockReadException, ItemDeserializeException {
 		synchronized (link) {
 			if (!link.isLoaded()) {
 				try {
@@ -447,8 +447,7 @@ public class Database {
 		}
 	}
 
-	private void unloadLink(Link<? extends Item> link, boolean justMemory)
-			throws BlockIOException, FermesItemException {
+	private void unloadLink(Link<? extends Item> link, boolean justMemory) throws ItemSerializeException, BlockWriteException {
 		synchronized (link) {
 			if (link.isLoaded()) {
 				try {
@@ -471,7 +470,7 @@ public class Database {
 		}
 	}
 
-	private void writeLinkBlocks(Link<? extends Item> link) throws FermesItemException, BlockIOException {
+	private void writeLinkBlocks(Link<? extends Item> link) throws ItemSerializeException, BlockWriteException {
 		if (link.isLoaded()) {
 			byte[] bytes = serializeItem(link.item);
 
@@ -481,7 +480,7 @@ public class Database {
 		}
 	}
 
-	private <R extends Item> void updateLinkLength(Link<R> link) throws BlockIOException, FermesItemException {
+	private <R extends Item> void updateLinkLength(Link<R> link) throws ItemSerializeException, MemoryManageException {
 		try {
 			this.processLock.tryLock();
 			this.diskLock.waitLock();
@@ -505,7 +504,7 @@ public class Database {
 	 * Create or remove link methods
 	 */
 
-	protected <R extends Item> Link<R> createLink(Link<? extends Item> parentLink, R item) throws PageIOException {
+	protected <R extends Item> Link<R> createLink(Link<? extends Item> parentLink, R item) throws LinkCreateException {
 		try {
 			this.processLock.tryLock();
 			this.diskLock.waitLock();
@@ -517,8 +516,8 @@ public class Database {
 				if (this.emptyPagePointers.isEmpty()) {
 					try {
 						this.pages.add(createPage());
-					} catch (IOException e) {
-						throw new PageIOException("Can't create new page.");
+					} catch (PageCreateException e) {
+						throw new LinkCreateException(e, "Failure to create link, because occured page create exception.");
 					}
 				}
 
@@ -551,8 +550,8 @@ public class Database {
 
 			try {
 				this.updateLinkLength(link);
-			} catch (BlockIOException | FermesItemException e) {
-				throw new PageIOException("Can't update link actuall length.");
+			} catch (ItemSerializeException | MemoryManageException e) {
+				throw new LinkCreateException(e, "Failure to create link, because occured update length exception.");
 			}
 
 			return link;
@@ -561,7 +560,7 @@ public class Database {
 		}
 	}
 
-	protected boolean removeLink(Link<? extends Item> link) {
+	protected boolean removeLink(Link<? extends Item> link) throws LinkRemoveException {
 		try {
 			this.processLock.tryLock();
 			this.diskLock.waitLock();
@@ -572,10 +571,8 @@ public class Database {
 				if (link.isLoaded()) {
 					try {
 						this.unloadLink(link, true);
-					} catch (BlockIOException | FermesItemException e) {
-						e.printStackTrace();
-
-						return false;
+					} catch (ItemSerializeException | BlockWriteException e) {
+						throw new LinkRemoveException(e, "Failure to remove link, because occured unload exception.");
 					}
 				}
 
@@ -632,7 +629,7 @@ public class Database {
 	 * Page control methods
 	 */
 
-	public Page createPage() throws IOException {
+	public Page createPage() throws PageCreateException {
 		synchronized (this.emptyPagePointers) {
 			Page page = createPageWithoutEmptyPointer();
 
@@ -642,11 +639,14 @@ public class Database {
 		}
 	}
 
-	public Page createPageWithoutEmptyPointer() throws IOException {
+	public Page createPageWithoutEmptyPointer() throws PageCreateException {
 		synchronized (this.pages) {
-			Page page = new Page(this, this.pageId++, this.pageSize, this.blockSize);
+			try {
+				return new Page(this, this.pageId++, this.pageSize, this.blockSize);
+			} catch (IOException e) {
+				throw new PageCreateException(e, "Failure to create page.");
+			}
 
-			return page;
 		}
 	}
 

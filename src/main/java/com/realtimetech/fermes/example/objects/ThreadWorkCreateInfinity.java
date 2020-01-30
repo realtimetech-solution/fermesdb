@@ -1,8 +1,7 @@
 package com.realtimetech.fermes.example.objects;
 
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
+import com.realtimetech.fermes.database.link.exception.LinkCreateException;
 
 public class ThreadWorkCreateInfinity implements Runnable {
 	private Link<DummyManager> dummyManager;
@@ -16,9 +15,7 @@ public class ThreadWorkCreateInfinity implements Runnable {
 		while (true) {
 			try {
 				dummyManager.get().addItem(new Dummy(512));
-			} catch (PageIOException e) {
-				e.printStackTrace();
-			} catch (FermesItemException e) {
+			} catch (LinkCreateException e) {
 				e.printStackTrace();
 			}
 		}

@@ -11,7 +11,8 @@ import com.realtimetech.fermes.database.Link.LinkSerializer;
 import com.realtimetech.fermes.database.io.StoreSerializable;
 import com.realtimetech.fermes.database.io.StoreSerializer;
 import com.realtimetech.fermes.database.item.Item;
-import com.realtimetech.fermes.database.page.exception.BlockIOException;
+import com.realtimetech.fermes.database.page.exception.BlockReadException;
+import com.realtimetech.fermes.database.page.exception.BlockWriteException;
 import com.realtimetech.fermes.database.page.file.FileWriter;
 import com.realtimetech.fermes.database.page.file.impl.BlockMemoryFileWriter;
 import com.realtimetech.fermes.database.page.file.impl.MemoryFileWriter;
@@ -186,6 +187,10 @@ public class Page extends StoreSerializable {
 		return pageFile;
 	}
 
+	public FileWriter getBlockFileWriter() {
+		return blockFileWriter;
+	}
+
 	public int[] fitBlockIds(int[] blockIds, int length) {
 		int needIndexies = (int) Math.ceil((float) length / (float) blockSize);
 
@@ -228,7 +233,7 @@ public class Page extends StoreSerializable {
 		}
 	}
 
-	public void writeBlocks(int[] blockIds, byte[] bytes) throws BlockIOException {
+	public void writeBlocks(int[] blockIds, byte[] bytes) throws BlockWriteException {
 		int index = 0;
 		int writeSize = bytes.length;
 		for (Integer blockId : blockIds) {
@@ -241,9 +246,7 @@ public class Page extends StoreSerializable {
 
 				writeSize -= this.blockSize;
 			} catch (IOException e) {
-				e.printStackTrace();
-
-				throw new BlockIOException("Can't write blocks.");
+				throw new BlockWriteException(e, "Can't write blocks.");
 			}
 		}
 	}
@@ -274,7 +277,7 @@ public class Page extends StoreSerializable {
 		}
 	}
 
-	public byte[] readBlocks(int[] blockIds, int itemLength) throws BlockIOException {
+	public byte[] readBlocks(int[] blockIds, int itemLength) throws BlockReadException {
 		byte[] bytes = new byte[itemLength];
 
 		int index = 0;
@@ -286,10 +289,10 @@ public class Page extends StoreSerializable {
 
 					this.blockFileWriter.readBytes(bytes, (index++) * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
 				}
-				
+
 				writeSize -= this.blockSize;
 			} catch (IOException e) {
-				throw new BlockIOException("Can't write blocks.");
+				throw new BlockReadException(e, "Can't read blocks.");
 			}
 		}
 

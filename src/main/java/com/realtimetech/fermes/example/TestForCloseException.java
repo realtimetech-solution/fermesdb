@@ -5,14 +5,11 @@ import java.io.File;
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
 import com.realtimetech.fermes.database.Link;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 
 public class TestForCloseException {
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException {
+	public static void main(String[] args) throws Exception {
 
 		FermesDB.deleteDatabase(new File("close_db/"));
 		Database database;

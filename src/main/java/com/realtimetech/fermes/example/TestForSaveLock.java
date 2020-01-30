@@ -3,16 +3,12 @@ package com.realtimetech.fermes.example;
 import java.io.File;
 import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
-import com.realtimetech.fermes.database.exception.FermesItemException;
-import com.realtimetech.fermes.database.page.exception.PageIOException;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
 import com.realtimetech.fermes.example.objects.ThreadWorkSelect;
-import com.realtimetech.fermes.exception.FermesDatabaseException;
 
 public class TestForSaveLock {
-	public static void main(String[] args) throws FermesDatabaseException, PageIOException, FermesItemException, InterruptedException {
-		Thread.sleep(15000);
+	public static void main(String[] args) throws Exception {
 		Database database;
 		File databaseDirectory = new File("save_lock_db/");
 		FermesDB.deleteDatabase(databaseDirectory);

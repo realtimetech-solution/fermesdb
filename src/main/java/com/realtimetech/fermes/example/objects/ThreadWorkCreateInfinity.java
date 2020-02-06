@@ -14,7 +14,7 @@ public class ThreadWorkCreateInfinity implements Runnable {
 	public void run() {
 		while (true) {
 			try {
-				dummyManager.get().addItem(new Dummy(512));
+				dummyManager.get().addDummy(new Dummy(512));
 			} catch (LinkCreateException e) {
 				e.printStackTrace();
 			}

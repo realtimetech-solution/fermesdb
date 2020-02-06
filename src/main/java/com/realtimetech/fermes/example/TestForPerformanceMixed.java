@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
 import com.realtimetech.fermes.example.objects.ThreadWorkSelect;
@@ -23,7 +23,7 @@ public class TestForPerformanceMixed {
  
 		List<Thread> threads = new LinkedList<Thread>();
 
-		int volume = 1000000;
+		int volume = 5000000;
 		int threadCount = 8;
 		int managerCount = 4;
 

@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
 

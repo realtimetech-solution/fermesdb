@@ -3,8 +3,8 @@ package com.realtimetech.fermes.example;
 import java.io.File;
 import java.util.Random;
 
-import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
@@ -17,7 +17,7 @@ public class TestForMemory {
 		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
 		while(true) {
-			dummyManager.get().addItem(new Dummy(new Random().nextInt(384) + 128));
+			dummyManager.get().addDummy(new Dummy(new Random().nextInt(384) + 128));
 			System.out.println(database.getCurrentMemory());
 		}
 	}

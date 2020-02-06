@@ -5,8 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
@@ -30,7 +30,7 @@ public class TestForRemoval {
 				int seed = random.nextInt(400) + 10;
 
 				for (int i = 0; i < size; i++) {
-					dummies.add(dummyManager.get().addItem(new Dummy(seed)));
+					dummies.add(dummyManager.get().addDummy(new Dummy(seed)));
 				}
 
 				for (Link<Dummy> dummy : dummies) {
@@ -40,7 +40,7 @@ public class TestForRemoval {
 				}
 
 				for (Link<Dummy> dummy : dummies) {
-					dummyManager.get().removeItem(dummy);
+					dummyManager.get().removeDummy(dummy);
 				}
 
 				dummies.clear();

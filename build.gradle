@@ -1,6 +1,5 @@
-plugins {
-    id 'java-library'
-}
+apply plugin: 'java'
+apply plugin: 'eclipse'
 
 repositories {
     jcenter()
@@ -8,6 +7,15 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.github.realtimetech-solution:kson:0.5.2'
-	implementation 'com.github.realtimetech-solution:reflection:0.2.4'
+	compile 'com.github.realtimetech-solution:kson:0.5.2'
+	compile 'com.github.realtimetech-solution:reflection:0.2.4'
+}
+
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Premain-Class': 'com.realtimetech.fermes.database.FermesDB'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }

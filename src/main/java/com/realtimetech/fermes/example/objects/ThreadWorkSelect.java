@@ -18,7 +18,7 @@ public class ThreadWorkSelect implements Runnable {
 		Random random = new Random();
 
 		for (int i = 0; i < volume; i++) {
-			int itemCount = dummyManager.get().getItemCount();
+			int itemCount = dummyManager.get().getDummyCount();
 
 			if (itemCount == 0) {
 				i--;
@@ -26,7 +26,7 @@ public class ThreadWorkSelect implements Runnable {
 				DummyManager dummyManager2 = dummyManager.get();
 				try {
 					int nextInt = random.nextInt(itemCount);
-					Link<Dummy> itemByGid = dummyManager2.getItem(nextInt);
+					Link<Dummy> itemByGid = dummyManager2.getDummy(nextInt);
 					@SuppressWarnings("unused")
 					Dummy dummy = itemByGid.get();
 				} catch (NullPointerException e) {

@@ -8,6 +8,7 @@ import com.realtimetech.fermes.database.io.StoreSerializable;
 import com.realtimetech.fermes.database.io.StoreSerializer;
 import com.realtimetech.fermes.database.item.Item;
 import com.realtimetech.fermes.database.item.exception.ItemDeserializeException;
+import com.realtimetech.fermes.database.item.exception.ItemSerializeException;
 import com.realtimetech.fermes.database.link.exception.LinkCreateException;
 import com.realtimetech.fermes.database.link.exception.LinkRemoveException;
 import com.realtimetech.fermes.database.memory.exception.MemoryManageException;
@@ -145,9 +146,8 @@ public class Link<R extends Item> extends StoreSerializable {
 		if (this.childLinks == null) {
 			synchronized (this) {
 				if (this.childLinks != null) {
-					return; // DOUBLE CHECK
+					return;
 				}
-
 				this.childLinks = new ArrayList<Long>();
 			}
 		}
@@ -170,6 +170,13 @@ public class Link<R extends Item> extends StoreSerializable {
 	}
 
 	public synchronized void unlock() {
+		if(this.getDatabase().isUseInstrumentation()) {
+			try {
+				this.getDatabase().updateLinkLength(this);
+			} catch (ItemSerializeException | MemoryManageException e) {
+			}
+		}
+		
 		this.froze = false;
 	}
 

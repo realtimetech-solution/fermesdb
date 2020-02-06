@@ -1,10 +1,21 @@
-package com.realtimetech.fermes;
+package com.realtimetech.fermes.database;
 
 import java.io.File;
-import com.realtimetech.fermes.database.Database;
+import java.lang.instrument.Instrumentation;
+
 import com.realtimetech.fermes.database.exception.DatabaseReadException;
 
 public class FermesDB {
+	private static volatile Instrumentation globalInstrumentation;
+
+	protected static Instrumentation getGlobalInstrumentation() {
+		return globalInstrumentation;
+	}
+
+	public static void premain(final String agentArgs, final Instrumentation instrumentation) {
+		globalInstrumentation = instrumentation;
+	}
+
 	public static Database loadDatabase(File databaseDirectory) throws DatabaseReadException {
 		return new Database(databaseDirectory);
 	}

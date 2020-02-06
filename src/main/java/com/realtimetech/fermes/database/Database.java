@@ -1,7 +1,9 @@
 package com.realtimetech.fermes.database;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -68,7 +70,12 @@ public class Database {
 
 	private List<Link<? extends Item>> frozeLinks;
 
-	public Database(File databaseDirectory) throws DatabaseReadException {
+	private boolean useInstrumentation;
+
+	private ByteArrayOutputStream byteArrayOutputStream;
+	private ObjectOutputStream objectOutputStream;
+
+	protected Database(File databaseDirectory) throws DatabaseReadException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -80,7 +87,7 @@ public class Database {
 		}
 	}
 
-	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws DatabaseReadException {
+	protected Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws DatabaseReadException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -101,6 +108,12 @@ public class Database {
 	}
 
 	Database() {
+		if (FermesDB.getGlobalInstrumentation() != null) {
+			this.useInstrumentation = true;
+		} else {
+			this.useInstrumentation = false;
+		}
+
 		this.diskLock = new Lock();
 		this.processLock = new Lock();
 
@@ -121,6 +134,18 @@ public class Database {
 		this.pageSize = 0;
 		this.blockSize = -1;
 		this.maxMemory = -1;
+
+		try {
+			this.byteArrayOutputStream = new ByteArrayOutputStream();
+			this.objectOutputStream = new ObjectOutputStream(this.byteArrayOutputStream);
+		} catch (IOException e) {
+			this.byteArrayOutputStream = null;
+			this.objectOutputStream = null;
+		}
+	}
+
+	public boolean isUseInstrumentation() {
+		return useInstrumentation;
 	}
 
 	/**
@@ -375,7 +400,7 @@ public class Database {
 		try {
 			JsonObject jsonObject = (JsonObject) ksonPool.get().fromString(new String(bytes, charset));
 
-			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), (JsonValue)jsonObject.get("item"));
+			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), (JsonValue) jsonObject.get("item"));
 
 			return (Item) object;
 		} catch (IOException | ClassNotFoundException | DeserializeException e) {
@@ -480,23 +505,36 @@ public class Database {
 		}
 	}
 
-	private <R extends Item> void updateLinkLength(Link<R> link) throws ItemSerializeException, MemoryManageException {
-		try {
-			this.processLock.tryLock();
-			this.diskLock.waitLock();
+	protected <R extends Item> void updateLinkLength(Link<R> link) throws ItemSerializeException, MemoryManageException {
+		int length = -1;
 
-			byte[] bytes = serializeItem(link.item);
-
-			this.fitMemory(bytes.length);
-
-			link.itemLength = bytes.length;
-
-			synchronized (this) {
-				join(link);
-				this.currentMemory += link.itemLength;
+		if (this.useInstrumentation) {
+			length = (int) FermesDB.getGlobalInstrumentation().getObjectSize(link.item);
+		} else {
+			if (this.objectOutputStream != null) {
+				synchronized (this.objectOutputStream) {
+					try {
+						this.objectOutputStream.writeObject(link.itemLength);
+						length = this.byteArrayOutputStream.size();
+						this.byteArrayOutputStream.reset();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
-		} finally {
-			this.processLock.unlock();
+		}
+
+		if (length == -1) {
+			byte[] bytes = serializeItem(link.item);
+			length = bytes.length;
+		}
+
+		this.fitMemory(length);
+		link.itemLength = length;
+
+		synchronized (this) {
+			join(link);
+			this.currentMemory += link.itemLength;
 		}
 	}
 
@@ -673,6 +711,7 @@ public class Database {
 		if (object.nextObject != null) {
 			object.nextObject.prevObject = object.prevObject;
 		}
+
 		if (object.prevObject != null) {
 			object.prevObject.nextObject = object.nextObject;
 		}

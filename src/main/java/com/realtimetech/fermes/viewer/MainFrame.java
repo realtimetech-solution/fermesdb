@@ -26,8 +26,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JMenu;
-import com.realtimetech.fermes.FermesDB;
+
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.exception.DatabaseCloseException;
 import com.realtimetech.fermes.database.exception.DatabaseReadException;

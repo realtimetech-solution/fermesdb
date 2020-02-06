@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.Random;
 
-import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.example.objects.Dummy;
 import com.realtimetech.fermes.example.objects.DummyManager;
@@ -27,7 +27,7 @@ public class TestForNormal {
 			for (int index = 0; index < loop; index++) {
 
 				for (int i = 0; i < size; i++) {
-					dummyManager.get().addItem(new Dummy(seed));
+					dummyManager.get().addDummy(new Dummy(seed));
 				}
 				System.out.println("******* Creation " + index + " batch done!");
 			}
@@ -46,7 +46,7 @@ public class TestForNormal {
 
 			for (int index = 0; index < loop; index++) {
 				for (Long gid : dummyManager.getChildLinks()) {
-					if (dummyManager.get().getItemByGid(gid).get().getDummyString().length() != seed) {
+					if (dummyManager.get().getDummyByGid(gid).get().getDummyString().length() != seed) {
 						System.err.println("틀린데?");
 					}
 				}
@@ -54,7 +54,7 @@ public class TestForNormal {
 			}
 
 			for (Long gid : new LinkedList<Long>(dummyManager.getChildLinks())) {
-				dummyManager.get().removeItem(dummyManager.get().getItemByGid(gid));
+				dummyManager.get().removeDummy(dummyManager.get().getDummyByGid(gid));
 			}
 			System.out.println("******* Remove all batch done!");
 			System.out.println("Memory " + database.getCurrentMemory());
@@ -69,7 +69,7 @@ public class TestForNormal {
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
 			for (int index = 0; index < loop; index++) {
-				if(dummyManager.get().getItemCount() != 0) {
+				if(dummyManager.get().getDummyCount() != 0) {
 					System.err.println("있는데?");
 				}
 			}

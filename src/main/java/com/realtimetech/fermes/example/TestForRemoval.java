@@ -20,7 +20,7 @@ public class TestForRemoval {
 
 		List<Link<Dummy>> dummies = new LinkedList<Link<Dummy>>();
 
-		int loop = 32;
+		int loop = 1024;
 		int step = 4;
 		int size = 256;
 

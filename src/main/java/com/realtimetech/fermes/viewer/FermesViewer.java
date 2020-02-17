@@ -28,6 +28,7 @@ import java.util.HashMap;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JMenu;
 
 import com.realtimetech.fermes.database.Database;
@@ -175,8 +176,12 @@ public class FermesViewer extends JFrame {
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		tree = new JTree();
-		splitPane.setLeftComponent(tree);
-
+		
+		JScrollPane scrollPane = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		
+		splitPane.setLeftComponent(scrollPane);
+		splitPane.setDividerLocation(200);
+		
 		treeJson = new JTree();
 		splitPane.setRightComponent(treeJson);
 

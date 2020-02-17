@@ -17,7 +17,11 @@ public class FermesDB {
 	}
 
 	public static Database loadDatabase(File databaseDirectory) throws DatabaseReadException {
-		return new Database(databaseDirectory);
+		return new Database(databaseDirectory, Long.MAX_VALUE);
+	}
+
+	public static Database loadDatabase(File databaseDirectory, long maxMemory) throws DatabaseReadException {
+		return new Database(databaseDirectory, maxMemory);
 	}
 
 	public static Database createDatabase(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws DatabaseReadException {

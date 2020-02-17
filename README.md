@@ -1,2 +1,2 @@
 # FermesDB
-Fast Object Oriented Database written in JAVA
+Fast Object-Oriented Database in JAVA

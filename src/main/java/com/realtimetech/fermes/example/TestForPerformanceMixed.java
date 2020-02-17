@@ -23,8 +23,8 @@ public class TestForPerformanceMixed {
  
 		List<Thread> threads = new LinkedList<Thread>();
 
-		int volume = 5000000;
-		int threadCount = 8;
+		int volume = 10000000;
+		int threadCount = 16;
 		int managerCount = 4;
 
 		int localThreadCount = threadCount / 2;

@@ -1,7 +1,5 @@
 package com.realtimetech.fermes.example.objects;
 
-import java.util.Random;
-
 import com.realtimetech.fermes.database.Link;
 
 public class ThreadWorkSelect implements Runnable {
@@ -15,24 +13,14 @@ public class ThreadWorkSelect implements Runnable {
 
 	@Override
 	public void run() {
-		Random random = new Random();
+		int count = volume;
 
-		for (int i = 0; i < volume; i++) {
-			int itemCount = dummyManager.get().getDummyCount();
-
-			if (itemCount == 0) {
-				i--;
-			} else {
-				DummyManager dummyManager2 = dummyManager.get();
-				try {
-					int nextInt = random.nextInt(itemCount);
-					Link<Dummy> itemByGid = dummyManager2.getDummy(nextInt);
-					@SuppressWarnings("unused")
-					Dummy dummy = itemByGid.get();
-				} catch (NullPointerException e) {
-					e.printStackTrace();
-				}
+		for (Link<Dummy> dummy : dummyManager.get().getDummyItems()) {
+			if ((count--) == 0) {
+				break;
 			}
+			
+			dummy.get();
 		}
 	}
 }

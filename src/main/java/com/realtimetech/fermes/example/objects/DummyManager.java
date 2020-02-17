@@ -26,6 +26,10 @@ public class DummyManager extends Items<Dummy> {
 		return super.getItemGids();
 	}
 
+	public Iterable<Link<Dummy>> getDummyItems() {
+		return super.getItems();
+	}
+
 	public int getDummyCount() {
 		return super.getItemCount();
 	}

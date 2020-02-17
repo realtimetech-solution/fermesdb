@@ -140,11 +140,12 @@ public class Link<R extends Item> extends StoreSerializable {
 		return this.childLinks.size();
 	}
 
+	@SuppressWarnings("unchecked")
 	public Iterable<Long> getChildLinks() {
 		this.createChildLinksIfNotExist();
 
 		synchronized (this.childLinks) {
-			return childLinks;
+			return (Iterable<Long>) childLinks.clone();
 		}
 	}
 

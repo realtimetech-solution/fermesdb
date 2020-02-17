@@ -1,7 +1,5 @@
 package com.realtimetech.fermes.example.objects;
 
-import java.util.Collection;
-
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.item.Items;
 import com.realtimetech.fermes.database.link.exception.LinkCreateException;
@@ -24,7 +22,7 @@ public class DummyManager extends Items<Dummy> {
 		return super.getItemByGid(gid);
 	}
 
-	public Collection<Long> getDummyGids() {
+	public Iterable<Long> getDummyGids() {
 		return super.getItemGids();
 	}
 

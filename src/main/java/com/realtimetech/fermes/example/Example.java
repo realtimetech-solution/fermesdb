@@ -28,6 +28,10 @@ public class Example {
 			return super.getItemGids();
 		}
 
+		public Iterable<Link<User>> getUsers() {
+			return super.getItems();
+		}
+
 		public int getUserCount() {
 			return super.getItemCount();
 		}
@@ -163,6 +167,11 @@ public class Example {
 			user.get().getInventory().get().addGameItem(new GameItem(400, "신발"));
 		}
 
+
+		for (Link<User> user : userManager.get().getUsers()) {
+			System.out.println(user.get());
+		}
+		
 		{
 			System.out.println("   ------- Where ------- ");
 			System.out.println();

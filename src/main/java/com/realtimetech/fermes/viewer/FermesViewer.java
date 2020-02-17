@@ -19,7 +19,6 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.HashMap;
 
 import javax.swing.JMenuBar;
@@ -43,7 +42,7 @@ import com.realtimetech.kson.transform.Transformer;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
 
-public class MainFrame extends JFrame {
+public class FermesViewer extends JFrame {
 	private Database database;
 
 	/**
@@ -65,7 +64,7 @@ public class MainFrame extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					MainFrame frame = new MainFrame("example_db/");
+					FermesViewer frame = new FermesViewer("example_db/");
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -79,7 +78,7 @@ public class MainFrame extends JFrame {
 	 * 
 	 * @throws FermesDatabaseException
 	 */
-	public MainFrame(String databaseDirectory) {
+	public FermesViewer(String databaseDirectory) {
 		this.ksonContext = new KsonContext();
 		this.ksonContext.registerTransformer(Link.class, new Transformer<Link<? extends Item>>() {
 			@Override
@@ -209,7 +208,7 @@ public class MainFrame extends JFrame {
 						parent.removeAllChildren();
 						ItemTreeNode itemTreeNode = (ItemTreeNode) path.getLastPathComponent();
 						Link<? extends Item> link = itemTreeNode.getLink();
-						Collection<Long> childLinks = link.getChildLinks();
+						Iterable<Long> childLinks = link.getChildLinks();
 						int index = 0;
 						for (Long gid : childLinks) {
 							Link<? extends Item> childLink = link.getDatabase().getLinkByGid(gid);
@@ -331,7 +330,7 @@ public class MainFrame extends JFrame {
 	public void readDatabaseChild(DefaultMutableTreeNode parent, int index, Link<? extends Item> link) {
 		ItemTreeNode itemTreeNode = new ItemTreeNode(index, link);
 
-		Collection<Long> childLinks = link.getChildLinks();
+		Iterable<Long> childLinks = link.getChildLinks();
 
 		int childIndex = 0;
 		for (Long gid : childLinks) {

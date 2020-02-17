@@ -1,8 +1,7 @@
 package com.realtimetech.fermes.database;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedList;
 
 import com.realtimetech.fermes.database.io.StoreSerializable;
 import com.realtimetech.fermes.database.io.StoreSerializer;
@@ -110,7 +109,7 @@ public class Link<R extends Item> extends StoreSerializable {
 	protected long gid;
 	protected long parentLink;
 
-	protected ArrayList<Long> childLinks;
+	protected LinkedList<Long> childLinks;
 
 	protected int[] blockIds;
 
@@ -134,7 +133,14 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.parentLink = parentGid;
 	}
 
-	public Collection<Long> getChildLinks() {
+	public int getChildCount() {
+		if (this.childLinks == null)
+			return 0;
+
+		return this.childLinks.size();
+	}
+
+	public Iterable<Long> getChildLinks() {
 		this.createChildLinksIfNotExist();
 
 		synchronized (this.childLinks) {
@@ -148,7 +154,7 @@ public class Link<R extends Item> extends StoreSerializable {
 				if (this.childLinks != null) {
 					return;
 				}
-				this.childLinks = new ArrayList<Long>();
+				this.childLinks = new LinkedList<Long>();
 			}
 		}
 	}
@@ -170,13 +176,13 @@ public class Link<R extends Item> extends StoreSerializable {
 	}
 
 	public synchronized void unlock() {
-		if(this.getDatabase().isUseInstrumentation()) {
+		if (this.getDatabase().isUseInstrumentation()) {
 			try {
 				this.getDatabase().updateLinkLength(this);
 			} catch (ItemSerializeException | MemoryManageException e) {
 			}
 		}
-		
+
 		this.froze = false;
 	}
 

@@ -1,7 +1,6 @@
 package com.realtimetech.fermes.example;
 
 import java.io.File;
-import java.util.LinkedList;
 import java.util.Random;
 
 import com.realtimetech.fermes.database.Database;
@@ -53,7 +52,7 @@ public class TestForNormal {
 				System.out.println("******* Select " + index + " batch done!");
 			}
 
-			for (Long gid : new LinkedList<Long>(dummyManager.getChildLinks())) {
+			for (Long gid : dummyManager.getChildLinks()) {
 				dummyManager.get().removeDummy(dummyManager.get().getDummyByGid(gid));
 			}
 			System.out.println("******* Remove all batch done!");

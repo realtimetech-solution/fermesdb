@@ -10,10 +10,9 @@ import com.realtimetech.fermes.example.objects.DummyManager;
 
 public class TestForCloseException {
 	public static void main(String[] args) throws Exception {
-
 		FermesDB.deleteDatabase(new File("close_db/"));
-		Database database;
-		database = FermesDB.get(new File("close_db/"), 1024, 512, Long.MAX_VALUE);
+
+		Database database = FermesDB.get(new File("close_db/"), 1024, 512, Long.MAX_VALUE);
 
 		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
@@ -25,7 +24,9 @@ public class TestForCloseException {
 		database.save();
 
 		System.out.println(dummyManager.get().getDummy(0).get().getDummyString().length());
+
 		dummyManager.get().getDummy(0).get().setDummyString("123");
+
 		System.out.println(dummyManager.get().getDummy(0).get().getDummyString().length());
 
 		database.close();
@@ -38,7 +39,7 @@ public class TestForCloseException {
 
 		database = FermesDB.get(new File("close_db/"), 1024, 512, Long.MAX_VALUE);
 		dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
-		System.out.println(dummyManager.get().getDummy(0).get().getDummyString());
 
+		System.out.println(dummyManager.get().getDummy(0).get().getDummyString());
 	}
 }

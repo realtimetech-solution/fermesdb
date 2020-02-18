@@ -1,6 +1,8 @@
 package com.realtimetech.fermes.database.item;
 
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.item.Items.ItemIterable.ItemWhere;
@@ -54,6 +56,16 @@ public abstract class Items<T extends Item> extends SelfItem<T> {
 			return new ItemIterable<V>((Iterable<Link<V>>) this, where);
 		}
 
+		public List<Link<V>> list() {
+			LinkedList<Link<V>> linkedList = new LinkedList<Link<V>>();
+
+			for (Link<V> link : this) {
+				linkedList.add(link);
+			}
+
+			return linkedList;
+		}
+
 		@Override
 		public Iterator<Link<V>> iterator() {
 			return new ItemIterator<V>(this.iterable.iterator(), this.where);
@@ -90,7 +102,7 @@ public abstract class Items<T extends Item> extends SelfItem<T> {
 		private void consume() {
 			while (iterator.hasNext()) {
 				Link<V> link = iterator.next();
-				
+
 				if (where.checkCondition(link.get())) {
 					this.lastLink = link;
 					return;

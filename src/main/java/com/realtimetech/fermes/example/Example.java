@@ -141,23 +141,14 @@ public class Example {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Database database;
 		File databaseDirectory = new File("example_db/");
 
 		FermesDB.deleteDatabase(databaseDirectory);
-		// Create or
-//		database = FermesDB.createDatabase(new File("example_db/"), 1024, 512, Long.MAX_VALUE);
 
-		// Load or
-//		database = FermesDB.loadDatabase(new File("example_db/"));
+		Database database = FermesDB.get(databaseDirectory, 1024, 512, Long.MAX_VALUE);
 
-		// Get(If not exist create, or not just load)
-		database = FermesDB.get(databaseDirectory, 1024, 512, Long.MAX_VALUE);
-
-		// Create root managers (not only one)
 		Link<UserManager> userManager = database.getLink("user_manager", () -> new UserManager());
 
-		// Add items
 		Random random = new Random();
 
 		for (int i = 0; i < 10 + random.nextInt(1000); i++) {
@@ -167,7 +158,7 @@ public class Example {
 				user.get().getInventory().get().addGameItem(new GameItem(random.nextInt(500) + 100, randomItemName()));
 			}
 		}
-		
+
 		{
 			System.out.println("   ------- Where ------- ");
 			System.out.println();
@@ -177,8 +168,8 @@ public class Example {
 				int count = 1;
 				for (Link<User> link : where) {
 					System.out.println("  " + (count++) + ". " + link.get().getName() + " \t " + link.get().getInventory().getChildCount() + " Items");
-					
-					for(Link<GameItem> gameItem : link.get().getInventory().get().getGameItems()) {
+
+					for (Link<GameItem> gameItem : link.get().getInventory().get().getGameItems()) {
 						System.out.println("       " + gameItem.get().getName() + "\t(" + gameItem.get().getPrice() + ")");
 					}
 					System.out.println("");
@@ -187,7 +178,7 @@ public class Example {
 			System.out.println();
 			System.out.println("   --------------------- ");
 		}
-		// Save database
-		database.saveAndBackup(new File("test.zip"));
+
+		database.save();
 	}
 }

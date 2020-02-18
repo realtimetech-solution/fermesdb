@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.realtimetech.fermes.database.page.file.FileWriter;
@@ -22,7 +22,7 @@ public class BlockMemoryFileWriter extends FileWriter {
 
 		this.pointer = 0;
 		this.blockSize = blockSize;
-		this.blocks = new LinkedList<byte[]>();
+		this.blocks = new ArrayList<byte[]>();
 	}
 
 	@Override
@@ -207,6 +207,6 @@ public class BlockMemoryFileWriter extends FileWriter {
 
 	@Override
 	public void close() throws IOException {
-		
+
 	}
 }

@@ -19,7 +19,7 @@ public class TestForPerformanceMixed {
 
 		FermesDB.deleteDatabase(databaseDirectory);
 		
-		database = FermesDB.get(databaseDirectory, 8192, 512, -1);
+		database = FermesDB.get(databaseDirectory, 8192, 512, 2048);
  
 		List<Thread> threads = new LinkedList<Thread>();
 

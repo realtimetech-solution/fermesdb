@@ -389,7 +389,7 @@ public class Database {
 			jsonObject.put("item", ksonPool.get().fromObject(item));
 
 			return ksonPool.writer().toString(jsonObject).getBytes(charset);
-		} catch (SerializeException e) {
+		} catch (SerializeException | IOException e) {
 			throw new ItemSerializeException(e, "Can't serialize object (item to bytes).");
 		}
 	}

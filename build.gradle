@@ -7,7 +7,7 @@ repositories {
 }
 
 dependencies {
-	compile 'com.github.realtimetech-solution:kson:0.5.2'
+	compile 'com.github.realtimetech-solution:kson:0.5.3'
 	compile 'com.github.realtimetech-solution:reflection:0.2.4'
 }
 

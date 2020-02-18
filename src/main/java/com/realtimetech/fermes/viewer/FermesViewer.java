@@ -156,6 +156,12 @@ public class FermesViewer extends JFrame {
 		});
 
 		JMenu menuSearch = new JMenu("Search");
+		menuSearch.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent actionEvent) {
+				
+			}
+		});
+		
 		menuBar.add(menuSearch);
 
 		JMenu menuHelp = new JMenu("Help");
@@ -166,7 +172,7 @@ public class FermesViewer extends JFrame {
 
 		menuAbout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent actionEvent) {
-				JOptionPane.showMessageDialog(null, "FERMES DB VIEWER 0.1V");
+				JOptionPane.showMessageDialog(null, "FERMES DB VIEWER 0.2V");
 			}
 		});
 

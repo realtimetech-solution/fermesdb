@@ -1,8 +1,9 @@
 package com.realtimetech.fermes.example;
 
 import java.io.File;
-import com.realtimetech.fermes.FermesDB;
+
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
 import com.realtimetech.fermes.example.objects.ThreadWorkSelect;

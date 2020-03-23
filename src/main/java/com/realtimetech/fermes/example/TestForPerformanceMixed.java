@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.realtimetech.fermes.FermesDB;
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.example.objects.DummyManager;
 import com.realtimetech.fermes.example.objects.ThreadWorkCreate;
 import com.realtimetech.fermes.example.objects.ThreadWorkSelect;
@@ -19,12 +19,12 @@ public class TestForPerformanceMixed {
 
 		FermesDB.deleteDatabase(databaseDirectory);
 		
-		database = FermesDB.get(databaseDirectory, 8192, 512, Long.MAX_VALUE);
+		database = FermesDB.get(databaseDirectory, 8192, 512, 2048);
  
 		List<Thread> threads = new LinkedList<Thread>();
 
-		int volume = 1000000;
-		int threadCount = 8;
+		int volume = 10000000;
+		int threadCount = 16;
 		int managerCount = 4;
 
 		int localThreadCount = threadCount / 2;

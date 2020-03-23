@@ -19,30 +19,36 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 
 import java.io.File;
-import java.util.Collection;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JMenu;
-import com.realtimetech.fermes.FermesDB;
+
 import com.realtimetech.fermes.database.Database;
+import com.realtimetech.fermes.database.FermesDB;
 import com.realtimetech.fermes.database.Link;
 import com.realtimetech.fermes.database.exception.DatabaseCloseException;
 import com.realtimetech.fermes.database.exception.DatabaseReadException;
 import com.realtimetech.fermes.database.item.Item;
+import com.realtimetech.fermes.database.page.Page;
+import com.realtimetech.fermes.database.page.exception.BlockReadException;
 import com.realtimetech.fermes.database.root.RootItem;
 import com.realtimetech.kson.KsonContext;
 import com.realtimetech.kson.element.JsonArray;
 import com.realtimetech.kson.element.JsonObject;
-import com.realtimetech.kson.exception.SerializeException;
-import com.realtimetech.kson.transform.Transformer;
+import com.realtimetech.kson.element.JsonValue;
 
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
 
-public class MainFrame extends JFrame {
+public class FermesViewer extends JFrame {
 	private Database database;
 
 	/**
@@ -53,8 +59,6 @@ public class MainFrame extends JFrame {
 
 	private JTree treeJson;
 
-	private KsonContext ksonContext;
-
 	private JsonObject targetObject;
 
 	/**
@@ -64,7 +68,7 @@ public class MainFrame extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					MainFrame frame = new MainFrame("example_db/");
+					FermesViewer frame = new FermesViewer("example_db/");
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -78,20 +82,7 @@ public class MainFrame extends JFrame {
 	 * 
 	 * @throws FermesDatabaseException
 	 */
-	public MainFrame(String databaseDirectory) {
-		this.ksonContext = new KsonContext();
-		this.ksonContext.registerTransformer(Link.class, new Transformer<Link<? extends Item>>() {
-			@Override
-			public Object serialize(KsonContext ksonContext, Link<? extends Item> value) {
-				return "GID <" + value.getGid() + ">";
-			}
-
-			@Override
-			public Link<? extends Item> deserialize(KsonContext ksonContext, Class<?> object, Object value) {
-				return null;
-			}
-		});
-
+	public FermesViewer(String databaseDirectory) {
 		setTitle("FermesViewer");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 934, 552);
@@ -165,6 +156,12 @@ public class MainFrame extends JFrame {
 		});
 
 		JMenu menuSearch = new JMenu("Search");
+		menuSearch.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent actionEvent) {
+				
+			}
+		});
+		
 		menuBar.add(menuSearch);
 
 		JMenu menuHelp = new JMenu("Help");
@@ -175,7 +172,7 @@ public class MainFrame extends JFrame {
 
 		menuAbout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent actionEvent) {
-				JOptionPane.showMessageDialog(null, "FERMES DB VIEWER 0.1V");
+				JOptionPane.showMessageDialog(null, "FERMES DB VIEWER 0.2V");
 			}
 		});
 
@@ -185,8 +182,12 @@ public class MainFrame extends JFrame {
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		tree = new JTree();
-		splitPane.setLeftComponent(tree);
-
+		
+		JScrollPane scrollPane = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		
+		splitPane.setLeftComponent(scrollPane);
+		splitPane.setDividerLocation(200);
+		
 		treeJson = new JTree();
 		splitPane.setRightComponent(treeJson);
 
@@ -207,17 +208,10 @@ public class MainFrame extends JFrame {
 					if (parent instanceof ItemTreeNode) {
 						parent.removeAllChildren();
 						ItemTreeNode itemTreeNode = (ItemTreeNode) path.getLastPathComponent();
-						Link<? extends Item> link = itemTreeNode.getLink();
-						Collection<Long> childLinks = link.getChildLinks();
+						Iterable<Long> childLinks = itemTreeNode.getChildLinks();
 						int index = 0;
 						for (Long gid : childLinks) {
-							Link<? extends Item> childLink = link.getDatabase().getLinkByGid(gid);
-
-							if (childLink.get() == null) {
-								System.out.println("NULL");
-							}
-
-							readDatabaseChild(parent, index++, childLink);
+							readDatabaseChild(parent, index++, database.getLinkByGid(gid));
 						}
 
 					}
@@ -238,19 +232,8 @@ public class MainFrame extends JFrame {
 					if (parent instanceof ItemTreeNode) {
 						ItemTreeNode itemTreeNode = (ItemTreeNode) parent;
 
-						Link<? extends Item> link = itemTreeNode.getLink();
-
-						link.lock();
-
-						try {
-							Item object = link.get();
-							targetObject = (JsonObject) ksonContext.fromObject(object);
-						} catch (SerializeException e) {
-							e.printStackTrace();
-						}
-
-						link.unlock();
-
+						targetObject = (JsonObject) itemTreeNode.getObject();
+						
 						updateViewerTree();
 					}
 				}
@@ -275,6 +258,32 @@ public class MainFrame extends JFrame {
 		}
 	}
 
+	public static JsonValue readForcely(Link<? extends Item> link) {
+		KsonContext ksonContext = new KsonContext();
+		
+		try {
+			Field blockIdsField = Link.class.getDeclaredField("blockIds");
+			blockIdsField.setAccessible(true);
+			Field itemLengthField = Link.class.getDeclaredField("itemLength");
+			itemLengthField.setAccessible(true);
+			Method declaredMethod = Link.class.getDeclaredMethod("getPage");
+			declaredMethod.setAccessible(true);
+
+			Page page = (Page) declaredMethod.invoke(link);
+
+			int[] blockIds = (int[]) blockIdsField.get(link);
+			int itemLength = (int) itemLengthField.get(link);
+
+			byte[] bytes = page.readBlocks(blockIds, itemLength);
+
+			return ksonContext.fromString(new String(bytes));
+		} catch (NoSuchFieldException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | BlockReadException | IOException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
 	public void readJsonChild(DefaultMutableTreeNode parent, Object object) {
 		parent.removeAllChildren();
 
@@ -293,7 +302,7 @@ public class MainFrame extends JFrame {
 
 			int index = 0;
 			for (Object value : jsonArray) {
-				JsonTreeNode keyNode = new JsonTreeNode("[" + (index++) + "]");
+				JsonTreeNode keyNode = new JsonTreeNode(" [" + (index++) + "]");
 
 				readJsonChild(keyNode, value);
 
@@ -319,7 +328,6 @@ public class MainFrame extends JFrame {
 			for (String key : linkMap.keySet()) {
 				Link<? extends Item> link = linkMap.get(key);
 
-				link.get();
 				readDatabaseChild(root, childIndex++, link);
 			}
 
@@ -330,7 +338,7 @@ public class MainFrame extends JFrame {
 	public void readDatabaseChild(DefaultMutableTreeNode parent, int index, Link<? extends Item> link) {
 		ItemTreeNode itemTreeNode = new ItemTreeNode(index, link);
 
-		Collection<Long> childLinks = link.getChildLinks();
+		Iterable<Long> childLinks = link.getChildLinks();
 
 		int childIndex = 0;
 		for (Long gid : childLinks) {

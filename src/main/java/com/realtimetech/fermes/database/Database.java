@@ -1,7 +1,9 @@
 package com.realtimetech.fermes.database;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -68,19 +70,25 @@ public class Database {
 
 	private List<Link<? extends Item>> frozeLinks;
 
-	public Database(File databaseDirectory) throws DatabaseReadException {
+	private boolean useInstrumentation;
+
+	private ByteArrayOutputStream byteArrayOutputStream;
+	private ObjectOutputStream objectOutputStream;
+
+	protected Database(File databaseDirectory, long maxMemory) throws DatabaseReadException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
-
+		this.maxMemory = maxMemory;
+		
 		load();
 
-		if (this.blockSize == -1 || this.maxMemory == -1) {
+		if (this.blockSize == -1) {
 			throw new DatabaseReadException("Can't load database, not exist database.");
 		}
 	}
 
-	public Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws DatabaseReadException {
+	protected Database(File databaseDirectory, int pageSize, int blockSize, long maxMemory) throws DatabaseReadException {
 		this();
 
 		this.databaseDirectory = databaseDirectory;
@@ -101,6 +109,12 @@ public class Database {
 	}
 
 	Database() {
+		if (FermesDB.getGlobalInstrumentation() != null) {
+			this.useInstrumentation = true;
+		} else {
+			this.useInstrumentation = false;
+		}
+
 		this.diskLock = new Lock();
 		this.processLock = new Lock();
 
@@ -121,6 +135,18 @@ public class Database {
 		this.pageSize = 0;
 		this.blockSize = -1;
 		this.maxMemory = -1;
+
+		try {
+			this.byteArrayOutputStream = new ByteArrayOutputStream();
+			this.objectOutputStream = new ObjectOutputStream(this.byteArrayOutputStream);
+		} catch (IOException e) {
+			this.byteArrayOutputStream = null;
+			this.objectOutputStream = null;
+		}
+	}
+
+	public boolean isUseInstrumentation() {
+		return useInstrumentation;
 	}
 
 	/**
@@ -163,7 +189,6 @@ public class Database {
 				jsonObject.put("pageId", 0);
 				jsonObject.put("pageSize", this.pageSize);
 				jsonObject.put("blockSize", this.blockSize);
-				jsonObject.put("maxMemory", this.maxMemory);
 
 				try {
 					Files.write(configFile.toPath(), jsonObject.toKsonString().getBytes(this.charset));
@@ -188,7 +213,6 @@ public class Database {
 
 			this.pageSize = (int) jsonObject.get("pageSize");
 			this.blockSize = (int) jsonObject.get("blockSize");
-			this.maxMemory = (long) jsonObject.get("maxMemory");
 
 			for (int index = 0; index < (int) jsonObject.get("pageId"); index++) {
 				try {
@@ -225,7 +249,6 @@ public class Database {
 			jsonObject.put("pageId", this.pageId);
 			jsonObject.put("pageSize", this.pageSize);
 			jsonObject.put("blockSize", this.blockSize);
-			jsonObject.put("maxMemory", this.maxMemory);
 
 			try {
 				Files.write(new File(databaseDirectory, "database.config").toPath(), jsonObject.toKsonString().getBytes(this.charset));
@@ -366,7 +389,7 @@ public class Database {
 			jsonObject.put("item", ksonPool.get().fromObject(item));
 
 			return ksonPool.writer().toString(jsonObject).getBytes(charset);
-		} catch (SerializeException e) {
+		} catch (SerializeException | IOException e) {
 			throw new ItemSerializeException(e, "Can't serialize object (item to bytes).");
 		}
 	}
@@ -375,7 +398,7 @@ public class Database {
 		try {
 			JsonObject jsonObject = (JsonObject) ksonPool.get().fromString(new String(bytes, charset));
 
-			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), (JsonValue)jsonObject.get("item"));
+			Object object = ksonPool.get().toObject(Database.class.getClassLoader().loadClass((String) jsonObject.get("class")), (JsonValue) jsonObject.get("item"));
 
 			return (Item) object;
 		} catch (IOException | ClassNotFoundException | DeserializeException e) {
@@ -384,34 +407,36 @@ public class Database {
 	}
 
 	synchronized void fitMemory(long size) throws MemoryManageException {
-		this.frozeLinks.clear();
-		while (this.currentMemory + size > this.maxMemory) {
-			Link<? extends Item> object = this.tailObject;
+		if(this.maxMemory != -1) {
+			this.frozeLinks.clear();
+			while (this.currentMemory + size > this.maxMemory) {
+				Link<? extends Item> object = this.tailObject;
 
-			if (object == null) {
-				throw new MemoryManageException("Can't unload object anymore, but still memory not enough.");
-			}
-
-			if (!object.accessed && !object.froze) {
-				try {
-					this.unloadLink(object, false);
-				} catch (ItemSerializeException | BlockWriteException e) {
-					throw new MemoryManageException(e, "Failure to unload item from memory.");
+				if (object == null) {
+					throw new MemoryManageException("Can't unload object anymore, but still memory not enough.");
 				}
-			} else {
-				object.accessed = false;
-				remove(object);
 
-				if (object.froze) {
-					this.frozeLinks.add(object);
+				if (!object.accessed && !object.froze) {
+					try {
+						this.unloadLink(object, false);
+					} catch (ItemSerializeException | BlockWriteException e) {
+						throw new MemoryManageException(e, "Failure to unload item from memory.");
+					}
 				} else {
-					join(object);
+					object.accessed = false;
+					remove(object);
+
+					if (object.froze) {
+						this.frozeLinks.add(object);
+					} else {
+						join(object);
+					}
 				}
 			}
-		}
 
-		for (Link<? extends Item> object : this.frozeLinks) {
-			join(object);
+			for (Link<? extends Item> object : this.frozeLinks) {
+				join(object);
+			}
 		}
 	}
 
@@ -436,9 +461,11 @@ public class Database {
 
 					link.item.onLoad(link);
 
-					synchronized (this) {
-						join(link);
-						this.currentMemory += link.itemLength;
+					if(this.maxMemory != -1) {
+						synchronized (this) {
+							join(link);
+							this.currentMemory += link.itemLength;
+						}
 					}
 				} finally {
 					this.processLock.unlock();
@@ -459,9 +486,11 @@ public class Database {
 					}
 					link.item = null;
 
-					synchronized (this) {
-						remove(link);
-						this.currentMemory -= link.itemLength;
+					if(this.maxMemory != -1) {
+						synchronized (this) {
+							remove(link);
+							this.currentMemory -= link.itemLength;
+						}
 					}
 				} finally {
 					this.processLock.unlock();
@@ -480,23 +509,38 @@ public class Database {
 		}
 	}
 
-	private <R extends Item> void updateLinkLength(Link<R> link) throws ItemSerializeException, MemoryManageException {
-		try {
-			this.processLock.tryLock();
-			this.diskLock.waitLock();
+	protected <R extends Item> void updateLinkLength(Link<R> link) throws ItemSerializeException, MemoryManageException {
+		if(this.maxMemory != -1) {
+			int length = -1;
 
-			byte[] bytes = serializeItem(link.item);
+			if (this.useInstrumentation) {
+				length = (int) FermesDB.getGlobalInstrumentation().getObjectSize(link.item);
+			} else {
+				if (this.objectOutputStream != null) {
+					synchronized (this.objectOutputStream) {
+						try {
+							this.objectOutputStream.writeObject(link.itemLength);
+							length = this.byteArrayOutputStream.size();
+							this.byteArrayOutputStream.reset();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
 
-			this.fitMemory(bytes.length);
+			if (length == -1) {
+				byte[] bytes = serializeItem(link.item);
+				length = bytes.length;
+			}
 
-			link.itemLength = bytes.length;
+			this.fitMemory(length);
+			link.itemLength = length;
 
 			synchronized (this) {
 				join(link);
 				this.currentMemory += link.itemLength;
 			}
-		} finally {
-			this.processLock.unlock();
 		}
 	}
 
@@ -673,6 +717,7 @@ public class Database {
 		if (object.nextObject != null) {
 			object.nextObject.prevObject = object.prevObject;
 		}
+
 		if (object.prevObject != null) {
 			object.prevObject.nextObject = object.nextObject;
 		}

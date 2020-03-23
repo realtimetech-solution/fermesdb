@@ -1,13 +1,13 @@
 package com.realtimetech.fermes.database;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedList;
 
 import com.realtimetech.fermes.database.io.StoreSerializable;
 import com.realtimetech.fermes.database.io.StoreSerializer;
 import com.realtimetech.fermes.database.item.Item;
 import com.realtimetech.fermes.database.item.exception.ItemDeserializeException;
+import com.realtimetech.fermes.database.item.exception.ItemSerializeException;
 import com.realtimetech.fermes.database.link.exception.LinkCreateException;
 import com.realtimetech.fermes.database.link.exception.LinkRemoveException;
 import com.realtimetech.fermes.database.memory.exception.MemoryManageException;
@@ -109,7 +109,7 @@ public class Link<R extends Item> extends StoreSerializable {
 	protected long gid;
 	protected long parentLink;
 
-	protected ArrayList<Long> childLinks;
+	protected LinkedList<Long> childLinks;
 
 	protected int[] blockIds;
 
@@ -133,11 +133,19 @@ public class Link<R extends Item> extends StoreSerializable {
 		this.parentLink = parentGid;
 	}
 
-	public Collection<Long> getChildLinks() {
+	public int getChildCount() {
+		if (this.childLinks == null)
+			return 0;
+
+		return this.childLinks.size();
+	}
+
+	@SuppressWarnings("unchecked")
+	public Iterable<Long> getChildLinks() {
 		this.createChildLinksIfNotExist();
 
 		synchronized (this.childLinks) {
-			return childLinks;
+			return (Iterable<Long>) childLinks.clone();
 		}
 	}
 
@@ -145,10 +153,9 @@ public class Link<R extends Item> extends StoreSerializable {
 		if (this.childLinks == null) {
 			synchronized (this) {
 				if (this.childLinks != null) {
-					return; // DOUBLE CHECK
+					return;
 				}
-
-				this.childLinks = new ArrayList<Long>();
+				this.childLinks = new LinkedList<Long>();
 			}
 		}
 	}
@@ -170,6 +177,13 @@ public class Link<R extends Item> extends StoreSerializable {
 	}
 
 	public synchronized void unlock() {
+		if (this.getDatabase().isUseInstrumentation()) {
+			try {
+				this.getDatabase().updateLinkLength(this);
+			} catch (ItemSerializeException | MemoryManageException e) {
+			}
+		}
+
 		this.froze = false;
 	}
 

@@ -16,7 +16,8 @@ public class ThreadWorkCreate implements Runnable {
 	public void run() {
 		for (int i = 0; i < volume; i++) {
 			try {
-				dummyManager.get().addItem(new Dummy(100));
+				dummyManager.get().addDummy(new Dummy(100));
+				
 			} catch (LinkCreateException e) {
 				e.printStackTrace();
 			}

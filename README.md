@@ -53,6 +53,8 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
     > ※ Link에는 매칭된 Data 객체와, 매칭된 Data 객체의 상세 정보(관계 정보, 위치 정보 등)가 저장되어 있습니다.
   - GID   
     Data 객체의 위치 정보를 나타내는 Unique ID로, 매칭된 Link에서 조회할 수 있습니다.
+  - Page   
+    메모리를 고정된 크기로 분할하여, 이를 가상 주소(GID)를 통해 참조하여 메모리를 효율적으로 관리합니다. 이때 고정된 크기로 분할되는 단위를 Page라고 하며, Page는 고정된 크기의 Block들로 구성되어 있습니다.
     
 #### 3.2.2. 관련 메소드 요약
 | Class | Modifier | Return | Method | Description |
@@ -69,14 +71,14 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
 #### 3.2.3. 사용법
 ##### 3.2.3.1. Item 추가
   ``` java
-    # 선언
+    // 선언
     public class UserManager extends Items {
       public Link<User> addUser(User item) throws LinkCreateException{
         return super.addItem(item);
       }
     }
 
-    # 예제
+    // 예제
     Database database = FermesDB.get(new File("example_db/"), 1024, 512, Long.MAX_VALUE);
 
     //만약 database에 "dummyManager"가 등록되어 있지 않다면 새로 생성 후 추가
@@ -88,7 +90,7 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
   ```
 ##### 3.2.3.2. Item 조회
   ``` java
-    # 선언
+    // 선언
     public class UserManager extends Items {
       public Link<User> getUserByIndex(int index) {
         return super.getItem(index);
@@ -107,7 +109,7 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
       }
     }
 
-    # 예제
+    // 예제
     Database database = FermesDB.get(new File("example_db/"), 1024, 512, Long.MAX_VALUE);
 
     //만약 database에 "dummyManager"가 등록되어 있지 않다면 새로 생성 후 추가
@@ -134,7 +136,7 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
   ```
 ##### 3.2.3.3. Item 삭제
   ``` java
-    # 선언
+    // 선언
     public class UserManager extends Items {
       public boolean removeUser(Link<User> link) throws LinkCreateException{
         return super.removeItem(link);
@@ -144,7 +146,7 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
       }
     }
 
-    # 예제
+    // 예제
     Database database = FermesDB.get(new File("example_db/"), 1024, 512, Long.MAX_VALUE);
 
     //만약 database에 "dummyManager"가 등록되어 있지 않다면 새로 생성 후 추가

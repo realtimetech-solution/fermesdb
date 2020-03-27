@@ -68,6 +68,14 @@ Fermes Class의 정적 메소드와 Database Class의 메소드를 통해 Databa
 | Items | Protected | Iterable<Long> | getItemGids() | Items의 Item List에 있는 Item들의 Gid 반환 |
 | Items | Protected | Iterable<Link\<T>> | getItems() | Items의 Item List 반환 |
 | Items | Protected | int | getItemCount() | Items의 Item List의 Count 반환 | 
+
+#### 3.2.3. Data 참조 흐름
+Data 객체를 참조할 때 아래와 같이 실행됩니다.   
+- 참조하려는 Data 객체의 정보가 저장된 Page 객체를 GID를 통해 찾습니다.   
+- Page 객체를 통해 Data 객체를 File로 부터 읽어드린 후 User에게 반환합니다.
+
+<img src="resources/readme_data.PNG" width = "700px" max-width ="100%">
+
 #### 3.2.3. 사용법
 ##### 3.2.3.1. Item 추가
   ``` java

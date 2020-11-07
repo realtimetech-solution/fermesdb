@@ -16,9 +16,14 @@ public class TestForMemory {
 
 		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
-		while(true) {
+		for (int i = 0; i < 5000; i++){
 			dummyManager.get().addDummy(new Dummy(new Random().nextInt(384) + 128));
-			System.out.println(database.getCurrentMemory());
+
+			if(i % 512 == 0){
+
+				System.out.println(database.getCurrentMemory());
+			}
+
 		}
 	}
 }

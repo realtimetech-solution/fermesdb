@@ -30,6 +30,7 @@ public class Full {
         // executeMain(TestForMemoryLock.class);
         executeMain(TestForSaveLock.class);
 
+        executeMain(TestForSaveIncreaseException.class);
         executeMain(TestForCloseException.class);
         executeMain(TestForRemoveAccessException.class);
 

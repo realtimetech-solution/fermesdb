@@ -6,6 +6,16 @@ import com.realtimetech.fermes.database.link.exception.LinkCreateException;
 import com.realtimetech.fermes.database.link.exception.LinkRemoveException;
 
 public class DummyManager extends Items<Dummy> {
+	private String modifyTester;
+
+	public String getModifyTester() {
+		return modifyTester;
+	}
+
+	public void setModifyTester(String modifyTester) {
+		this.modifyTester = modifyTester;
+	}
+
 	public Link<Dummy> addDummy(Dummy item) throws LinkCreateException {
 		return super.addItem(item);
 	}

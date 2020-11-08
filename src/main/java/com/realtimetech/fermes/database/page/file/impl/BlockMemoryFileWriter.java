@@ -28,6 +28,7 @@ public class BlockMemoryFileWriter extends FileWriter {
 	@Override
 	public void reset() throws IOException {
 		this.pointer = 0;
+		this.blocks.clear();
 	}
 
 	@Override
@@ -172,9 +173,11 @@ public class BlockMemoryFileWriter extends FileWriter {
 	public void save() throws IOException {
 		createFileIfNotExist();
 		BufferedOutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(getFile(), false));
+
 		for (byte[] bytes : this.blocks) {
 			fileOutputStream.write(bytes);
 		}
+
 
 		fileOutputStream.close();
 	}
@@ -185,9 +188,8 @@ public class BlockMemoryFileWriter extends FileWriter {
 		File file = getFile();
 		FileInputStream fileInputStream = new FileInputStream(file);
 
-		int index = (int) Math.ceil(file.length() / this.blockSize);
-
-		expendBlocks(index);
+		int index = (int) Math.ceil((double)file.length() / (double)this.blockSize);
+		expendBlocks(index - 1);
 
 		for (byte[] bytes : this.blocks) {
 			int goal = bytes.length;

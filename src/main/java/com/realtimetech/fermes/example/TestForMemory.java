@@ -11,6 +11,8 @@ import com.realtimetech.fermes.example.objects.DummyManager;
 
 public class TestForMemory {
 	public static void main(String[] args) throws Exception {
+		FermesDB.deleteDatabase(new File("memory_db/"));
+
 		Database database;
 		database = FermesDB.get(new File("memory_db/"), 1024, 512, 1024);
 

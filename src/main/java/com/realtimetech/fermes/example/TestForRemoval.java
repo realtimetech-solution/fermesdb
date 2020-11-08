@@ -13,8 +13,10 @@ import com.realtimetech.fermes.example.objects.DummyManager;
 
 public class TestForRemoval {
 	public static void main(String[] args) throws Exception {
+		File databaseDirectory = new File("removal_db/");
+		FermesDB.deleteDatabase(databaseDirectory);
 		Database database;
-		database = FermesDB.get(new File("removal_db/"), 1024, 512, 1024);
+		database = FermesDB.get(databaseDirectory, 1024, 512, 1024);
 
 		Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 

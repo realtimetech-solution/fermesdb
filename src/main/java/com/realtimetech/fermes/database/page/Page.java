@@ -240,10 +240,10 @@ public class Page extends StoreSerializable {
 			try {
 				synchronized (this.blockFileWriter) {
 					this.blockFileWriter.set(blockId * this.blockSize);
-
-					this.blockFileWriter.writeBytes(bytes, (index++) * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
+					this.blockFileWriter.writeBytes(bytes, index * this.blockSize, writeSize > this.blockSize ? this.blockSize : writeSize);
 				}
 
+				index++;
 				writeSize -= this.blockSize;
 			} catch (IOException e) {
 				throw new BlockWriteException(e, "Can't write blocks.");

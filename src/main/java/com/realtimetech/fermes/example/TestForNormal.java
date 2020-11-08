@@ -17,12 +17,15 @@ public class TestForNormal {
 		Random random = new Random();
 		int seed = random.nextInt(400) + 10;
 		File databaseDirectory = new File("normal_db/");
+		FermesDB.deleteDatabase(databaseDirectory);
 		{
 			Database database;
 			database = FermesDB.get(databaseDirectory, 128, 512, Long.MAX_VALUE);
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
+			dummyManager.get().setModifyTester("A");
+			
 			for (int index = 0; index < loop; index++) {
 
 				for (int i = 0; i < size; i++) {
@@ -42,6 +45,11 @@ public class TestForNormal {
 			database = FermesDB.loadDatabase(databaseDirectory);
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
+			
+			if(!dummyManager.get().getModifyTester().equals("A")){
+				System.out.println("틀려");
+			}
+			dummyManager.get().setModifyTester("B");
 
 			for (int index = 0; index < loop; index++) {
 				for (Long gid : dummyManager.getChildLinks()) {
@@ -67,6 +75,9 @@ public class TestForNormal {
 
 			Link<DummyManager> dummyManager = database.getLink("dummy_manager", () -> new DummyManager());
 
+			if(!dummyManager.get().getModifyTester().equals("B")){
+				System.out.println("틀려2222");
+			}
 			for (int index = 0; index < loop; index++) {
 				if(dummyManager.get().getDummyCount() != 0) {
 					System.err.println("있는데?");

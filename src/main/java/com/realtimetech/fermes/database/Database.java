@@ -293,9 +293,9 @@ public class Database {
 			this.processLock.waitLock();
 			this.diskLock.lock();
 
-			save();
-
 			ZipUtils.zipFolder(databaseDirectory, backupFile);
+
+			save();
 		} catch (IOException e) {
 			throw new DatabaseBackupException(e, "Failure to backup, because occurred compress zip exception.");
 		} finally {

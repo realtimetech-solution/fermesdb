@@ -14,6 +14,7 @@ import com.realtimetech.fermes.database.memory.exception.MemoryManageException;
 import com.realtimetech.fermes.database.page.Page;
 import com.realtimetech.fermes.database.page.exception.BlockReadException;
 import com.realtimetech.fermes.database.page.file.impl.MemoryFileWriter;
+import com.realtimetech.kson.annotation.Ignore;
 
 public class Link<R extends Item> extends StoreSerializable {
 	public static class LinkSerializer extends StoreSerializer<Link<? extends Item>> {
@@ -95,24 +96,35 @@ public class Link<R extends Item> extends StoreSerializable {
 		}
 	}
 
+	@Ignore
 	protected Link<? extends Item> nextObject;
+	@Ignore
 	protected Link<? extends Item> prevObject;
 
+	@Ignore
 	protected boolean accessed;
+	@Ignore
 	protected boolean removed = false;
+	@Ignore
 	protected boolean froze = false;
 
+	@Ignore
 	private Page page;
 
+	@Ignore
 	protected R item;
 
 	protected long gid;
+	@Ignore
 	protected long parentLink;
 
+	@Ignore
 	protected LinkedList<Long> childLinks;
 
+	@Ignore
 	protected int[] blockIds;
 
+	@Ignore
 	protected int itemLength;
 
 	public Link(Database database) {

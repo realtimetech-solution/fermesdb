@@ -1,6 +1,6 @@
 # FermesDB 
 ## 1. 소개
-  > **FermesDB**는 Java 기반의 객체지향 Database입니다.
+  > **FermesDB**는 Java 기반의 OOP 입니다.
 ## 2. 장점
   > - 객체 기반으로 Data가 저장되며, 자동 serialize/deserialize를 지원합니다.
   > - Paging 개념이 적용되어 Memory가 효율적으로 관리됩니다.

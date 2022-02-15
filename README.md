@@ -135,12 +135,7 @@ Data 객체를 참조할 때 아래와 같이 실행됩니다.
       Link<User> userLink = userManager.getUserByGid(gid);
     }
     // 이름이 세글자인 User들만 조회
-    Iterable<Link<User>> foundUserLinks = userManager.where((user) ->{ 
-      if(user.getName().length == 3) {
-        return true;
-      }
-      return false;
-    });
+    Iterable<Link<User>> foundUserLinks = userManager.where((user) -> user.getName().length == 3);
   ```
 ##### 3.2.3.3. Item 삭제
   ``` java
